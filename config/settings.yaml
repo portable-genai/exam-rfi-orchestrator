@@ -1,0 +1,268 @@
+# Regulatory Exam and RFI Orchestrator (Cop2) runtime configuration.
+#
+# Loaded by `src/exam_rfi_orchestrator/config.py`. Point at a different file with
+# EXAMRFI_SETTINGS; a path that is named but missing is a boot error, not
+# a silent fall-back to built-in defaults.
+#
+# `${VAR}` and `${VAR:-default}` resolve in THREE states: unset takes the default written here,
+# SET-AND-EMPTY resolves to empty (an operator who emptied a value expressed an intent, and it
+# names nothing), and a set value wins. This file holds env var NAMES and non-secret defaults
+# only: no secret value is ever committed here.
+
+# Data residency. Selected once and shared by the runtime and Terraform.
+region: ${GCP_REGION:-asia-southeast1}
+
+# Tenant partition asserted on outbound reviews when the verified principal carries none.
+# (Built as one template expression: a literal "${" immediately before a template opener is
+# ambiguous to render, so the whole reference is produced by the expression instead.)
+tenant: ${EXAMRFI_TENANT:-}
+
+# GCP project for the managed tracer's Cloud Trace export and for the trace resource name
+# Cloud Logging links each log line on. Empty is fine on Cloud Run, where the exporter reads
+# the project from the metadata server.
+project_id: ${GOOGLE_CLOUD_PROJECT:-}
+
+# Local profile stores. ":memory:" is the ephemeral, deterministic default the gate uses; a
+# deployment points this at a durable path.
+audit_path: ${EXAMRFI_AUDIT_PATH:-:memory:}
+
+# The external head anchor for the WORM audit chain (practices check C9). The hash chain cannot
+# detect a TRUNCATED TAIL by itself: dropping the newest rows leaves a shorter chain that
+# verifies perfectly. Point this at a file on a DIFFERENT volume, under different credentials,
+# from audit_path, and every append also writes the chain head there. Empty (the default) means
+# no anchor, which is correct for the ephemeral ":memory:" store and wrong for a durable one.
+audit_anchor_path: ${EXAMRFI_AUDIT_ANCHOR:-}
+
+# The audience the managed (gcp) IAP identity adapter verifies the assertion AGAINST: the
+# IAP-protected resource, "/projects/<NUM>/global/backendServices/<ID>" behind an HTTPS load
+# balancer. It is per-deployment, so it is configuration and never a literal in the adapter.
+# Three states, and UNSET and SET-AND-EMPTY land in the same place on purpose: both resolve to
+# empty, and an empty audience REFUSES every caller rather than verifying without one.
+# google-auth documents audience=None as "the audience is not verified", which accepts ANY
+# Google-signed OIDC token, from any project or any app, and reads its email as a principal.
+iap_audience: ${EXAMRFI_IAP_AUDIENCE:-}
+
+# Rule R8: where an escalated result is routed for human review. The managed profile REFUSES to
+# swallow an escalation when this is empty, so a producer cannot ship with R8 unwired.
+# The outbound S2S credentials are HUMAN_REVIEW_S2S_TOKEN / HUMAN_REVIEW_S2S_SIGNING_KEY (see .env.secrets.example),
+# deliberately distinct from this service's own inbound EXAMRFI_S2S_TOKEN.
+review_url: ${HUMAN_REVIEW_URL:-}
+
+# --------------------------------------------------------------------------------------- #
+# This vertical's upstream reads. Each is three-state: UNSET and SET-AND-EMPTY both arrive as
+# empty, and the MANAGED adapter then REFUSES every call rather than reaching a default host.
+# There is no default for any of them on purpose: for retrieval and for the obligation register
+# an empty success is a false statement about what the firm holds.
+# --------------------------------------------------------------------------------------- #
+
+# The governed enterprise corpus the knowledge-base port retrieves from (ACL-aware).
+knowledge_base_url: ${EXAMRFI_KNOWLEDGE_BASE_URL:-}
+
+# The obligation register's read surface. Read-only by construction: this service never writes
+# obligations, so it can never grow a second register that drifts from the one of record.
+obligations_url: ${EXAMRFI_OBLIGATIONS_URL:-}
+
+# The assembled control-evidence pack read surface, reused rather than rebuilt here.
+evidence_packs_url: ${EXAMRFI_EVIDENCE_PACKS_URL:-}
+
+# The Firestore collection the managed case store keeps the open-item board in. Its API belongs
+# in apis.tf, its CMEK service-agent binding in kms.tf, its least-privilege role in iam.tf and
+# its entry in vpc_sc.tf, in one commit; docs/practices-audit.md records that as an open gap.
+case_collection: ${EXAMRFI_CASE_COLLECTION:-}
+
+# Where the OFFLINE case store keeps its SQLite file. ":memory:" is the ephemeral, deterministic
+# default the gate and the demo use; a deployment points this at a durable path.
+case_store_path: ${EXAMRFI_CASE_STORE_PATH:-:memory:}
+
+# The managed model the generation port calls. The model NARRATES, CLASSIFIES and NORMALISES and
+# owns no number: every coverage state, deadline, count, exhibit number and approval count is
+# computed by the deterministic engine. Empty means the managed adapter refuses rather than
+# picking a default model, and the provenance banner says so.
+generation_model: ${EXAMRFI_GENERATION_MODEL:-}
+
+# --------------------------------------------------------------------------------------- #
+# The adopter-owned policy block. EVERY number an exam response turns on lives here rather than
+# in an engine module, so a firm's second line can read these rules, argue about them and change
+# them with a configuration review and an audit trail rather than with a release.
+#
+# All of it is REFERENCE policy. It is not legal advice, it is not current-in-law, and the
+# adopter's counsel owns it. Two rows deserve an argument before deployment: the completeness
+# floor (shipped at the strictest value, which is a default to argue with rather than a
+# recommendation) and the silent-withhold tag list (a legal position, not a technical one).
+# --------------------------------------------------------------------------------------- #
+policy:
+  # Response windows in BUSINESS days, applied ONLY when the notice itself states no date.
+  # A stated date is never lengthened by policy. Your numbers, not ours.
+  response_windows:
+    exam_request_list: 20
+    rfi: 15
+    s166_skilled_person: 30
+    thematic_review: 20
+    information_notice: 10
+
+  # The maker-checker buffer subtracted from the regulator's date to get the INTERNAL date, which
+  # is the one that actually binds an exam team. Your number.
+  review_buffer_business_days: 5
+
+  # The last business day before the deadline on which an extension can still credibly be asked
+  # for. This is the action an exam lead takes when the clock turns red. Your number.
+  extension_notice_business_days: 10
+
+  # How far outside the review period evidence may fall and still be usable, as STALE. Beyond
+  # this it is out of period and supports nothing. Your number.
+  evidence_max_age_days: 400
+
+  # CEILINGS on business days remaining to the INTERNAL due date, checked in order; anything
+  # above the last ceiling is low. Your numbers.
+  sla_bands:
+    - ceiling: 0
+      band: critical
+    - ceiling: 3
+      band: high
+    - ceiling: 8
+      band: medium
+
+  # The completeness a pack must reach before it may be released. Shipped at the strictest value
+  # because this is a regulator submission; argue with it, do not assume it. Your number.
+  min_completeness_pct_for_release: 100
+
+  # How many accepted documents may support one requirement, taken in the order the store
+  # returned them. The engine never re-ranks. Your number.
+  max_evidence_per_requirement: 5
+
+  # Handling tags that are never produced. Your counsel owns this list.
+  hard_withhold_tags:
+    - legally_privileged
+    - sar_confidential
+
+  # Tags whose schedule row carries an identifier and a basis and NO title, because in several
+  # regimes the existence of the filing is itself restricted. This asymmetry against the
+  # privilege row is a legal position your counsel must confirm before you deploy.
+  silent_withhold_tags:
+    - sar_confidential
+
+  # Whether a privileged document needs a STORED waiver record before it may be produced. The
+  # request's waiver_ref is a lookup key and grants nothing either way.
+  privilege_requires_waiver: true
+
+  # Where evidence may lawfully be transferred FROM, keyed by the REQUESTING jurisdiction. An
+  # unknown requester resolves to a set containing only itself, which is the fail-closed reading.
+  # Your counsel owns this matrix.
+  transfer_matrix:
+    SG: [SG, HK]
+    HK: [HK, SG]
+    JP: [JP]
+    AU: [AU]
+
+  # Instruments and outcome kinds that demand two approvals. The ENGINE is the single owner of
+  # the approval count; the review payload builder reads it and has no rule of its own.
+  dual_control_instruments:
+    - s166_skilled_person
+    - information_notice
+  dual_control_kinds:
+    - pack
+
+  # The named-regime register. EVERY shipped row fixes NO response window, which is what an exam
+  # request list, an RFI, a thematic review and a skilled-person scope all do in practice: the
+  # notice states its own date. The cap rule is live and unit-tested precisely so an adopter
+  # whose counsel identifies a regime that DOES fix a window configures it here rather than
+  # patching code, and the due basis then names the regime.
+  regime_register:
+    supervisory-information-request:
+      title: Supervisory request for information
+      source: the adopter's own supervisory handbook, cited by the notice
+      fixed_response_window_days: 0
+      note: "No fixed statutory window: the notice states its own date."
+    skilled-person-review:
+      title: Skilled person / independent expert review
+      source: the adopter's own supervisory handbook, cited by the notice
+      fixed_response_window_days: 0
+      note: "The scope document states the reporting dates; no fixed window applies."
+    thematic-supervisory-review:
+      title: Thematic supervisory review
+      source: the adopter's own supervisory handbook, cited by the notice
+      fixed_response_window_days: 0
+      note: "No fixed statutory window: the letter states its own date."
+
+  # Business-day calendars, one per jurisdiction, each PINNED by a version. A stale holiday list
+  # shifts every internal due date by a day, in the unsafe direction, and nothing in this code
+  # can detect it; the version is what makes a recomputation years later show which list was
+  # used. docs/runbook.md makes reviewing these a standing item. Your calendars.
+  calendars:
+    SG:
+      calendar_version: "2027.1"
+      weekend_days: [5, 6]
+      holidays: ["2027-01-01", "2027-05-01", "2027-08-09", "2027-12-25"]
+    HK:
+      calendar_version: "2027.1"
+      weekend_days: [5, 6]
+      holidays: ["2027-01-01", "2027-05-01", "2027-07-01", "2027-12-25"]
+
+# The per-port adapter map: the ONLY place a binding lives, so switching the whole stack is a
+# configuration change rather than a code edit. Every port must bind every profile; the loader
+# refuses a partial block and `tests/test_settings_file.py` fails the build if this drifts from
+# `config.DEFAULT_BINDINGS`.
+adapters:
+  audit:
+    local: exam_rfi_orchestrator.adapters.local.audit:LocalAuditAdapter
+    gcp: exam_rfi_orchestrator.adapters.gcp.audit:CloudAuditAdapter
+    onprem: exam_rfi_orchestrator.adapters.onprem.audit:OnPremAuditAdapter
+  identity:
+    local: exam_rfi_orchestrator.adapters.local.identity:LocalIdentityAdapter
+    gcp: exam_rfi_orchestrator.adapters.gcp.identity:IapIdentityAdapter
+    onprem: exam_rfi_orchestrator.adapters.onprem.identity:OnPremIdentityAdapter
+  review_router:
+    local: exam_rfi_orchestrator.adapters.local.review_router:LocalReviewRouter
+    gcp: exam_rfi_orchestrator.adapters.gcp.review_router:CloudReviewRouter
+    onprem: exam_rfi_orchestrator.adapters.onprem.review_router:OnPremReviewRouter
+
+
+  # Tracing. Which BACKEND a deployed profile exports to is not a binding: the gcp
+  # adapter reads OTEL_EXPORTER_OTLP_ENDPOINT and sends OTLP to the Hrz5 collector when it
+  # is set, straight to Cloud Trace when it is not. Tracing is not essential to correctness,
+  # so onprem is ABSENT rather than fatal, unlike every other onprem placeholder here.
+  tracer:
+    local: exam_rfi_orchestrator.adapters.local.tracer:LocalNoopTracerAdapter
+    gcp: exam_rfi_orchestrator.adapters.gcp.tracer:CloudTracerAdapter
+    onprem: exam_rfi_orchestrator.adapters.onprem.tracer:OnPremTracerAdapter
+
+  # The promotion authority (Hrz4). The local adapter scores offline but REFUSES to promote:
+  # a promotion certified by a laptop with no quality service is certified by nothing.
+  evaluation:
+    local: exam_rfi_orchestrator.adapters.local.evaluation:LocalOfflineEvalAdapter
+    gcp: exam_rfi_orchestrator.adapters.gcp.evaluation:ManagedEvalGateAdapter
+    onprem: exam_rfi_orchestrator.adapters.onprem.evaluation:OnPremEvalAdapter
+
+  # ACL-aware retrieval against the governed enterprise corpus. Empty retrieval is a legitimate
+  # answer the engine turns into "no draft"; a failure to REACH the corpus raises, because an
+  # empty success would look like a firm that holds no responsive evidence.
+  knowledge_base:
+    local: exam_rfi_orchestrator.adapters.local.knowledge_base:LocalKnowledgeBaseAdapter
+    gcp: exam_rfi_orchestrator.adapters.gcp.knowledge_base:CloudKnowledgeBaseAdapter
+    onprem: exam_rfi_orchestrator.adapters.onprem.knowledge_base:OnPremKnowledgeBaseAdapter
+
+  # The obligation register, read-only by construction.
+  obligations:
+    local: exam_rfi_orchestrator.adapters.local.obligations:LocalObligationsAdapter
+    gcp: exam_rfi_orchestrator.adapters.gcp.obligations:CloudObligationsAdapter
+    onprem: exam_rfi_orchestrator.adapters.onprem.obligations:OnPremObligationsAdapter
+
+  # Assembled control-evidence packs, reused on identical admissibility terms.
+  evidence_packs:
+    local: exam_rfi_orchestrator.adapters.local.evidence_packs:LocalEvidencePackAdapter
+    gcp: exam_rfi_orchestrator.adapters.gcp.evidence_packs:CloudEvidencePackAdapter
+    onprem: exam_rfi_orchestrator.adapters.onprem.evidence_packs:OnPremEvidencePackAdapter
+
+  # The model. It narrates, classifies and normalises; it owns no number, no coverage state, no
+  # deadline, no exhibit number and no approval count.
+  generation:
+    local: exam_rfi_orchestrator.adapters.local.generation:LocalGenerationAdapter
+    gcp: exam_rfi_orchestrator.adapters.gcp.generation:CloudGenerationAdapter
+    onprem: exam_rfi_orchestrator.adapters.onprem.generation:OnPremGenerationAdapter
+
+  # The open-item board, and the only correct home for a privilege waiver and an extension: both
+  # are STORE LOOKUPS, so a client-asserted reference grants nothing.
+  case_store:
+    local: exam_rfi_orchestrator.adapters.local.case_store:LocalCaseStoreAdapter
+    gcp: exam_rfi_orchestrator.adapters.gcp.case_store:CloudCaseStoreAdapter
+    onprem: exam_rfi_orchestrator.adapters.onprem.case_store:OnPremCaseStoreAdapter
