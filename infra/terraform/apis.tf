@@ -40,6 +40,10 @@ locals {
     # nothing and costs nothing, and it is what keeps "CMEK does not cascade" from becoming a
     # step somebody forgets on the day they add the adapter.
     "aiplatform.googleapis.com",
+    # The case store this vertical writes (firestore.tf). Its CMEK service-agent
+    # binding is in kms.tf: enabling the API without that binding gives a database
+    # encrypted under Google-managed keys that looks identical in the console.
+    "firestore.googleapis.com",
     "storage.googleapis.com",
 
     # Supporting services the above require.
