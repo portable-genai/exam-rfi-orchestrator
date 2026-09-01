@@ -38,6 +38,10 @@ locals {
     "roles/cloudtrace.agent",             # tracer.py
     "roles/secretmanager.secretAccessor", # the inbound and outbound service credentials
     "roles/aiplatform.user",              # the narration surface a vertical binds
+    # datastore.user, not datastore.owner: this service reads and writes case
+    # documents and never administers the database. The least-privilege rule this
+    # file states at the top is the reason the narrower role is named.
+    "roles/datastore.user", # case_store.py (firestore.tf)
   ]
 }
 

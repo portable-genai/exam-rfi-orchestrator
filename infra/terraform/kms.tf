@@ -86,3 +86,13 @@ resource "google_kms_crypto_key_iam_member" "storage" {
   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
   member        = "serviceAccount:service-${data.google_project.this.number}@gs-project-accounts.iam.gserviceaccount.com"
 }
+
+# Firestore encrypts the case store under this key. Declared here rather than left implicit for
+# the reason the file's other bindings are: CMEK does not cascade, and a database created without
+# the binding still comes up, encrypted under Google-managed keys, indistinguishable in the
+# console from the CMEK case.
+resource "google_kms_crypto_key_iam_member" "firestore" {
+  crypto_key_id = google_kms_crypto_key.cmek.id
+  role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
+  member        = "serviceAccount:service-${data.google_project.this.number}@gcp-sa-firestore.iam.gserviceaccount.com"
+}

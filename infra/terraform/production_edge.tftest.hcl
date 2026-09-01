@@ -48,6 +48,20 @@ run "residency_defaults_are_in_country" {
   }
 
   assert {
+    condition     = google_firestore_database.cases.location_id == local.region
+    error_message = "The case store must be created in the deployment region, never a multi-region."
+  }
+
+  # PRESENCE, not the key id: under mock_provider the crypto key's id is unknown at plan time,
+  # so comparing against it is an unresolvable condition rather than a check. Presence is what
+  # matters anyway, because the failure mode is an ABSENT block: the resource then comes up
+  # encrypted under Google-managed keys, successfully, and looks identical in the console.
+  assert {
+    condition     = length(google_firestore_database.cases.cmek_config) == 1
+    error_message = "The case store must encrypt under the regional CMEK, not Google-managed keys."
+  }
+
+  assert {
     condition     = one(google_org_policy_policy.resource_locations[*].spec[0].rules[0].values[0].allowed_values) == tolist(["in:${local.render_region}-locations"])
     error_message = "The org-policy location allowlist must pin exactly the deployment region's location group."
   }
