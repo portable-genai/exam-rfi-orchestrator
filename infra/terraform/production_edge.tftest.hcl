@@ -19,6 +19,11 @@
 
 mock_provider "google" {}
 
+# firestore.tf uses google-beta. Mocking only `google` left it unmocked, so the runs below
+# reached for application default credentials and passed only where the runner happened to
+# have some. The header above has always claimed this file needs none; now it is true.
+mock_provider "google-beta" {}
+
 run "residency_defaults_are_in_country" {
   command = plan
 

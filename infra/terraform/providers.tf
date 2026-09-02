@@ -29,10 +29,23 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 7.0"
     }
+    # firestore.tf binds `provider = google-beta` for cmek_config, which the GA 7.x schema does
+    # not carry. It was never DECLARED here, so Terraform inferred an implicit google-beta and
+    # initialised it against whatever ambient credentials the runner happened to have. That is
+    # why production_edge.tftest.hcl passed in Cloud Build and fails anywhere without them.
+    google-beta = {
+      source  = "hashicorp/google-beta"
+      version = "~> 7.0"
+    }
   }
 }
 
 provider "google" {
   project = var.project_id
   region  = local.region # the selected, allowlisted region: pinned, never global
+}
+
+provider "google-beta" {
+  project = var.project_id
+  region  = local.region
 }
