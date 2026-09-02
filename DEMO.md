@@ -26,7 +26,7 @@ exits non-zero.
 | 2 | A fully evidenced item | Decomposed, retrieved, admitted, dated, indexed, cited, and NOT escalated. The due date, the completeness number and the band are stdlib arithmetic over recorded inputs, and the exhibit numbers came out of a SORT, which is why a resubmission diffs cleanly. Manufacturing a review here trains an exam lead to approve without reading. |
 | 3 | A consequential item | Several cited blockers, including a contradiction with what the firm told this regulator in an earlier submission. Escalated AND routed in the same call (rule R8). The reviewer is handed the NAMES of the rules that fired, not a score. |
 | 4 | Masked on the way in, withheld by rule | Two different controls in one beat. The planted identifier is masked BEFORE the audit write, because the record is immutable. Separately, three documents are not produced and each gets a schedule row with a stated basis; the restricted-filing row carries an identifier and a basis and NO title. |
-| 5 | What the checker receives, and the open-item board | The item escalations plus exactly one PACK approval, each with the verified maker and the approval count read off the engine's outcome. Two approvals on a skilled-person item that never escalated: dual control and escalation are different questions. Beside it, the exam lead's board, read back under the caller's entitlements. |
+| 5 | What the checker receives, and the open-item board | The item escalations plus exactly one pack review, which needs two approvals, each with the verified maker and the approval count read off the engine's outcome. Two approvals on a skilled-person item that never escalated: dual control and escalation are different questions. Beside it, the exam lead's board, read back under the caller's entitlements. |
 | 6 | The audit trail | Hash-chained, externally anchored, and exportable to JSON Lines that reload elsewhere with the chain intact. Every record names its due basis, pins its calendar version and carries every withhold basis. |
 | 7 | A rewritten withhold basis | An attacker with file access edits a blocked, routed item to read allowed and low and flips its withheld privileged document to produced. That is exactly the rewrite that makes a late, incomplete production look clean. The chain names the record. Tamper-EVIDENT, not tamper-proof. |
 | 8 | The exit profile | The same calls on `onprem`, no code edited: every unimplemented seam refuses loudly rather than dropping the work. |
@@ -71,6 +71,12 @@ Say these bounds out loud, because an audience will otherwise assume the opposit
   defensible, and the two failure modes this demo is proudest of showing, a contradicted prior
   answer and a wrongly produced privileged document, are exactly the ones that only really appear
   against a messy real corpus.
+- **No model runs in this demo.** The generation port is bound to an offline stub that restates
+  engine facts deterministically, and it says so on screen: the deployment panel names the model
+  `deterministic-offline-stub`. So "the model wrote the sentence" in step 2 means the port a
+  managed model would occupy wrote it. The claim the demo makes is that nothing the model writes
+  decides anything, and that claim is the same either way. What it does NOT show is how a real
+  model's narration reads, or how often it needs a reviewer.
 - **Retrieval recall is not measured.** Nothing here says the corpus returned everything responsive.
 - **No running on-premises deployment.** Step 8 proves every seam refuses; it proves nothing about
   a deployment nobody has stood up.

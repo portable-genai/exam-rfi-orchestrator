@@ -7,7 +7,7 @@ profile, so a step that stops being true stops passing rather than stops being m
 
 Three properties make it worth running in front of somebody:
 
-* **Nothing is faked.** No stub service, no pre-baked JSON. The deadlines, the coverage states,
+* **Nothing is faked.** No engine stub, no pre-baked JSON. The deadlines, the coverage states,
   the withholding bases, the exhibit numbers, the routing references and the tamper verdict are
   produced by the shipped code.
 * **It is bounded.** The demo proves an offline, single-process seam. It does not prove a live
@@ -520,7 +520,7 @@ class DemoRun:
                 Row("Staleness window", str(policy.evidence_max_age_days) + " days"),
                 Row("Completeness floor for release", str(policy.min_completeness_pct_for_release)),
                 Row("Never produced", _tags(policy.hard_withhold_tags)),
-                Row("Produced with no title", _tags(policy.silent_withhold_tags)),
+                Row("Withheld with no title", _tags(policy.silent_withhold_tags)),
                 Row("Transfer matrix", _matrix(policy)),
                 Row("Named regimes (fixed window)", regimes, "ok"),
                 Row("Calendars", calendars),
@@ -930,7 +930,12 @@ class DemoRun:
             rows=(
                 Row("Append-only triggers", "dropped by the attacker", "warn"),
                 Row("Record rewritten in place", "seq " + str(target), "warn"),
-                Row("What was changed", "a blocked, routed item read as allowed and low", "warn"),
+                Row(
+                    "What was changed",
+                    "a blocked, routed item reads as allowed and low, and its withheld "
+                    "privileged document reads as produced",
+                    "warn",
+                ),
                 Row("Verdict before the rewrite", before.detail, "ok"),
             ),
             note=(
@@ -1214,6 +1219,12 @@ def _step_to_dict(result: StepResult) -> dict[str, Any]:
     }
 
 
+#: The withhold basis the tamper step rewrites, as it appears in the stored summary. Named once
+#: so the rewrite and its guard cannot drift apart: a marker that stopped matching would leave
+#: the step rewriting the decision and the band alone, and still passing.
+WITHHOLD_MARKER = "withheld=kb-dpr-leg-01:A4"
+
+
 def _rewrite_a_record(store: Path) -> int:
     """Drop the append-only triggers and rewrite one INTERIOR record, as an attacker would.
 
@@ -1234,7 +1245,16 @@ def _rewrite_a_record(store: Path) -> int:
         payload["decision"] = "allowed"
         payload["severity"] = "low"
         summary = str(payload.get("redacted_summary", ""))
-        payload["redacted_summary"] = summary.replace("withheld=kb-dpr-leg-01:A4", "withheld=none")
+        # The withhold basis is the field this whole step is named for, so a rewrite that
+        # quietly missed it would leave the step passing on the decision and band alone.
+        if WITHHOLD_MARKER not in summary:
+            raise RuntimeError(
+                "the record to rewrite carries no withhold basis: expected "
+                + WITHHOLD_MARKER
+                + " in "
+                + summary
+            )
+        payload["redacted_summary"] = summary.replace(WITHHOLD_MARKER, "withheld=none")
         conn.execute(
             "UPDATE audit_log SET event_json = ? WHERE seq = ?",
             (json.dumps(payload, sort_keys=True, separators=(",", ":")), int(middle[0])),
