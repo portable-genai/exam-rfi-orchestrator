@@ -62,8 +62,10 @@ and a locked WORM log bucket in the Terraform stack. The retention lock is irrev
 
 Both lockfiles are fully pinned and `pip-audit` runs over both as a hard gate in `make audit`. The
 container base is digest-pinned and runs as non-root uid 10001. There are no GitHub Actions to
-pin: Actions are disabled organization-wide and the workflow files were retired, so the gate is
-the hosted Cloud Build check.
+pin in this repository: the caller is RENDERED, never hand-written, so nothing here names an
+action version. The two actions the fleet actually pins (in the reusable workflow and its
+publisher) live in `.github` and are SHA-pinned there. The gate is the hosted GitHub Actions
+check.
 
 ### What is deliberately out of scope?
 
