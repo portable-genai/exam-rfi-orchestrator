@@ -47,7 +47,7 @@ _ALL_PATTERNS = (
 
 _ACTION_PREFIX = "exam_rfi_orchestrator"
 _SOD_GROUP = "exam_rfi_orchestrator-maker-checker"
-_CATALOG_ID = "Cop2"
+_REPOSITORY = "exam-rfi-orchestrator"
 
 
 def _redact(text: str) -> str:
@@ -93,6 +93,6 @@ def result_to_review(outcome: ReviewableOutcome, *, maker: str, tenant: str = ""
         case_ref=outcome.case_ref,
         # Producer-owned, tenant-scoped key so a retried delivery is idempotent at the console,
         # and so an item exception and a pack approval never collapse into one review.
-        source_key=f"{_CATALOG_ID}:{outcome.case_ref}:{outcome.outcome_kind}",
+        source_key=f"{_REPOSITORY}:{outcome.case_ref}:{outcome.outcome_kind}",
         citations=_kit_citations(outcome),
     )

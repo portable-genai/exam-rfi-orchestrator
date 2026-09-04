@@ -18,9 +18,9 @@ privilege and does not release a pack. Second, no policy number shipped here is 
 currently correct in law; every window, band, tag and holiday is the adopter's.
 
 These FAQs deliberately do **not** re-document capabilities owned by sibling systems. Where a
-concern belongs to another repo (ACL-aware retrieval in Hrz2, the guardrail gateway Hrz1, the
-agent registry Hrz3, the eval platform Hrz4, observability and WORM audit Hrz5, the human-review
-console Hrz7), the FAQ points at it and explains the boundary. See
+concern belongs to another repo (ACL-aware retrieval in `enterprise-knowledge-base`, the guardrail gateway `agent-guardrail-gateway`, the
+agent registry `agent-registry`, the eval platform `model-quality-gate`, observability and WORM audit `agent-observability`, the human-review
+console `human-review-console`), the FAQ points at it and explains the boundary. See
 [features-faq.md](features-faq.md) for the full map.
 
 Authority order for anything these pages disagree with: [`SPEC.md`](../../SPEC.md), then

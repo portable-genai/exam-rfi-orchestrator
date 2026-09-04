@@ -1,4 +1,4 @@
-"""FastAPI application for Regulatory Exam and RFI Orchestrator (Cop2).
+"""FastAPI application for Regulatory Exam and RFI Orchestrator (exam-rfi-orchestrator).
 
 Import-safe (the Container is built at request time, never at import; only ``Settings`` is read
 at import, to learn which identity adapter is bound, and no adapter is constructed), identity is

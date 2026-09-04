@@ -72,12 +72,12 @@ release gate and the approval rules.
 
 | Sibling | Boundary |
 |---|---|
-| **Hrz2** enterprise knowledge base | Owns ACL-aware retrieval and the index. This service reaches it as a PORT and builds no second index. |
-| **Hrz7** human-review console | Owns maker-checker. Every outcome is routed to it (rule R8). |
-| **Hrz3** agent registry | Discovery, via the A2A card. |
-| **Hrz4** eval / quality gate | Owns promotion verdicts. |
-| **Hrz5** observability and WORM audit | Owns the immutable audit sink and traces. |
-| **Hrz1** guardrail gateway | **Not bound.** Rule R1 applies here: untrusted document and question text reaches a live model. |
+| `enterprise-knowledge-base` | Owns ACL-aware retrieval and the index. This service reaches it as a PORT and builds no second index. |
+| `human-review-console` | Owns maker-checker. Every outcome is routed to it (rule R8). |
+| `agent-registry` | Discovery, via the A2A card. |
+| `model-quality-gate` eval / quality gate | Owns promotion verdicts. |
+| `agent-observability` and WORM audit | Owns the immutable audit sink and traces. |
+| `agent-guardrail-gateway` | **Not bound.** Rule R1 applies here: untrusted document and question text reaches a live model. |
 
 ### Can I demo it without a cloud project?
 
@@ -88,9 +88,9 @@ exits non-zero when a step stops being true.
 
 ### What is not built yet?
 
-The catalog row for Cop2 carries the honest list. The headline items: the managed knowledge-base,
+The catalog row for `exam-rfi-orchestrator` carries the honest list. The headline items: the managed knowledge-base,
 obligations, evidence-pack and case-store adapters refuse correctly when unconfigured but their
 live payload parsing is unwired and no live upstream has been exercised; the case store's
-Firestore resources are absent from `infra/terraform/`; Hrz1, Hrz5 and Hrz3 are unwired;
+Firestore resources are absent from `infra/terraform/`; `agent-guardrail-gateway`, `agent-observability` and `agent-registry` are unwired;
 decomposition recall is unmeasured and unmeasurable offline; and the regime cap rule K3 is
 exercised by unit tests alone because every shipped register row fixes no response window.

@@ -18,7 +18,7 @@ It rewrites the package name (which is also the console script), the `EXAMRFI_` 
 including the bare token `infra/terraform/render.tf.json` carries as `render_env_prefix` and the
 backticked form the docs carry, the Terraform `name_prefix` resource stem (`cop2-svc`) and the
 distribution id. Add `--include-docs` to sweep Markdown prose too. It skips itself and renames the
-package directory last. The catalog id `Cop2` is kept unless you pass `--catalog-id`.
+package directory last. The catalog id `exam-rfi-orchestrator` is kept unless you pass `--catalog-id`.
 
 Then recreate the venv (the distribution name changed) and run `make gate`.
 
@@ -37,7 +37,7 @@ the golden datasets, the `onprem` adapters, branding and the regulator crosswalk
 - **Every policy number**, owned by counsel: windows, buffers, bands, staleness limits, withhold
   tags, holidays, approval rules.
 - **A governed handling-tag scheme** on your document corpus, because those tags decide disclosure.
-- **ACL-aware retrieval** behind `KnowledgeBasePort`, from Hrz2 or your own index.
+- **ACL-aware retrieval** behind `KnowledgeBasePort`, from `enterprise-knowledge-base` or your own index.
 - **An obligation register** behind `ObligationsPort`, with rows that actually fix response windows
   if your regime caps them.
 - **Evidence pack and case store** implementations.
@@ -89,8 +89,8 @@ has no expectation, and the hosted GitHub Actions check runs that gate on every 
 
 ### What is still open?
 
-The catalog row for Cop2 carries the honest list. In short: the managed adapters' live payload
+The catalog row for `exam-rfi-orchestrator` carries the honest list. In short: the managed adapters' live payload
 parsing is unwired and no live upstream has been exercised; the case store's Firestore resources
-are absent from Terraform; Hrz1, Hrz5 and Hrz3 are unwired; the model-card controls (pinned model
+are absent from Terraform; `agent-guardrail-gateway`, `agent-observability` and `agent-registry` are unwired; the model-card controls (pinned model
 and version, token budget, kill switch, retrieval cache, reasoning trace, managed-profile eval)
 are open; and rule K3 is exercised by unit tests alone.

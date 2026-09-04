@@ -1,4 +1,4 @@
-# SPEC: Regulatory Exam and RFI Orchestrator (Cop2)
+# SPEC: Regulatory Exam and RFI Orchestrator (`exam-rfi-orchestrator`)
 
 Locked decisions, pinned stack, contracts. This document is the deepest authority on intent.
 
@@ -165,7 +165,7 @@ Locked decisions, pinned stack, contracts. This document is the deepest authorit
   wildcard however it is written, and an empty allowlist denies rather than opening up. The
   console renders WITHHELD, DENIED and MISSING distinctly, which is a test rather than a
   convention, and it states that it cannot release anything.
-- **Eval**: `--mode smoke` is the offline pre-merge check; `--mode gate` is the Hrz4 promotion
+- **Eval**: `--mode smoke` is the offline pre-merge check; `--mode gate` is the `model-quality-gate` promotion
   authority. The gate fails closed.
 - **Tests**: split into `unit`, `contract` and `integration`. The offline gate runs the first
   two; every integration module is marked, and that marking is itself enforced.

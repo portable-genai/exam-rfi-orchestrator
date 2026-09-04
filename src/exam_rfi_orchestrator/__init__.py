@@ -1,4 +1,4 @@
-"""Regulatory Exam and RFI Orchestrator (Cop2).
+"""Regulatory Exam and RFI Orchestrator (exam-rfi-orchestrator).
 
 Turns a regulator exam request list into a deadline-tracked citation-backed response.
 

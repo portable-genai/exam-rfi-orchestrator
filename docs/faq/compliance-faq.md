@@ -92,7 +92,7 @@ load bearing. If you configure one, add a test that pins it.
 
 ### What is still open at go-live?
 
-The managed adapters' live payload parsing, the case store's cloud resources, the Hrz1 guardrail
-binding, Hrz5 and Hrz3 wiring, register rows that exercise the regime caps, and the model-card
+The managed adapters' live payload parsing, the case store's cloud resources, the `agent-guardrail-gateway`
+binding, `agent-observability` and `agent-registry` wiring, register rows that exercise the regime caps, and the model-card
 controls (pinned model and version, token budget, documented kill switch, retrieval cache,
 reasoning trace, managed-profile evaluation).
