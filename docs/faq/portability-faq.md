@@ -15,7 +15,7 @@ described.
 | Profile | For | Adapters |
 |---|---|---|
 | `local` | laptops, CI, demos | fixture corpus, obligation register, evidence packs, prior answers and case store, plus a deterministic narration stub. No SDK, no network, no credentials. |
-| `gcp` | the managed deployment | Hrz2-backed knowledge base, managed obligations and evidence packs, a Firestore case store, a managed model for narration, Hrz5 for audit and traces. |
+| `gcp` | the managed deployment | `enterprise-knowledge-base`-backed knowledge base, managed obligations and evidence packs, a Firestore case store, a managed model for narration, `agent-observability` for audit and traces. |
 | `onprem` | a client-hosted install | fail-fast placeholders naming the client system to bind. |
 
 Selection is one variable, `EXAMRFI_PROFILE`, and it is three-state: unset, set-and-empty and

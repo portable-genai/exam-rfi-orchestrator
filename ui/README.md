@@ -1,6 +1,6 @@
 # ui: the embeddable micro-frontend
 
-A Next.js App Router console for Regulatory Exam and RFI Orchestrator (Cop2).
+A Next.js App Router console for Regulatory Exam and RFI Orchestrator (`exam-rfi-orchestrator`).
 It runs standalone for a demo and embeds into a client's existing web application as an iframe,
 with the same security posture either way.
 

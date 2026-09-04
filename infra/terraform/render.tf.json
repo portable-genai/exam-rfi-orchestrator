@@ -4,6 +4,6 @@
     "render_region": "asia-southeast1",
     "render_package_name": "exam_rfi_orchestrator",
     "render_env_prefix": "EXAMRFI",
-    "render_catalog_id": "Cop2"
+    "render_repository": "exam-rfi-orchestrator"
   }
 }

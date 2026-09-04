@@ -1,4 +1,4 @@
-# Model card: Regulatory Exam and RFI Orchestrator (Cop2)
+# Model card: Regulatory Exam and RFI Orchestrator (`exam-rfi-orchestrator`)
 
 This is a STARTER model card. It records the model boundary as built and the controls that must be
 completed before a managed deployment.
@@ -64,12 +64,12 @@ pure domain where the eval cannot reach it.
   which is a deterministic-only mode by accident rather than a designed operator action. Make it
   one and document it in the runbook.
 - **No retrieval cache**. Each run re-reaches the knowledge base.
-- **Prompt-injection screening** (rule R1). Hrz1 is not bound. The inputs here are documents and
+- **Prompt-injection screening** (rule R1). `agent-guardrail-gateway` is not bound. The inputs here are documents and
   question text supplied by parties outside this service.
 - **Reasoning trace** (P-07). The audit carries the redacted outcome and its citations, not a
   prompt and reply pair.
 - **Managed-profile evaluation** (P-08, rule R5). The offline eval scores the deterministic
-  pipeline with the stub bound. Add a managed-profile run registered with the Hrz4 gate.
+  pipeline with the stub bound. Add a managed-profile run registered with the `model-quality-gate`.
 
 ## What the eval does and does not prove
 

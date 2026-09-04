@@ -16,7 +16,7 @@ its own key, signs its own assertions and runs the REAL verifier over them.
 
 ### How is entitlement enforced on retrieval?
 
-Retrieval is ACL-aware and the entitlement decision belongs to the knowledge base (Hrz2), not to
+Retrieval is ACL-aware and the entitlement decision belongs to the knowledge base (`enterprise-knowledge-base`), not to
 this service. A candidate the caller is not entitled to see becomes a `DENIED_NO_ENTITLEMENT`
 release blocker rather than a silent omission, so an incomplete pack is visible as incomplete.
 `entitlement_safety` is a hard eval metric at 1.0.
@@ -44,7 +44,7 @@ validator that discards output rather than repairing it. An unrecognised asserti
 `UNRECOGNISED_ASSERTION` release blocker, not a silent pass.
 
 The remaining exposure is prompt injection through document and question text, which is written by
-parties outside this service. Hrz1 is **not** bound; rule R1 applies.
+parties outside this service. `agent-guardrail-gateway` is **not** bound; rule R1 applies.
 
 ### Where does personal data go?
 
@@ -54,7 +54,7 @@ hard eval metric.
 
 ### How is the audit trail protected?
 
-Audit events go to `AuditSinkPort`, backed by Hrz5's immutable WORM sink in the managed profile
+Audit events go to `AuditSinkPort`, backed by `agent-observability`'s immutable WORM sink in the managed profile
 and a locked WORM log bucket in the Terraform stack. The retention lock is irreversible; confirm
 `retention_days` before the first apply.
 
@@ -70,8 +70,8 @@ check.
 ### What is deliberately out of scope?
 
 - **Login.** This repo owns no authentication flow.
-- **The document index and its ACLs.** Owned by Hrz2.
-- **Guardrail screening.** Owned by Hrz1, not bound today.
+- **The document index and its ACLs.** Owned by `enterprise-knowledge-base`.
+- **Guardrail screening.** Owned by `agent-guardrail-gateway`, not bound today.
 - **Filing and release.** No code path here releases a pack.
 - **The correctness of document handling tags.** Privilege, restricted-filing status and
   cross-border restriction are read from the corpus. That is a data-governance dependency, and it

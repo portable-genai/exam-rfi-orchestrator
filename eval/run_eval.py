@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Evaluation gate for Regulatory Exam and RFI Orchestrator (Cop2).
+"""Evaluation gate for Regulatory Exam and RFI Orchestrator (exam-rfi-orchestrator).
 
 Two named layers via ``--mode`` (the scaffold is ``agent_eval_kit.eval_main``):
 
@@ -436,6 +436,6 @@ if __name__ == "__main__":
             smoke=run_smoke,
             gate=run_gate,
             default_dataset=DEFAULT_DATASET,
-            description="Offline / promotion-authority evaluation gate for Cop2.",
+            description="Offline / promotion-authority evaluation gate for exam-rfi-orchestrator.",
         )
     )

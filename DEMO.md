@@ -1,4 +1,4 @@
-# DEMO: Regulatory Exam and RFI Orchestrator (Cop2)
+# DEMO: Regulatory Exam and RFI Orchestrator (`exam-rfi-orchestrator`)
 
 Everything here runs **offline**: no cloud project, no credentials, no API key, no browser
 engine, no bundler. That is the first thing to say out loud, because it is the claim the rest of

@@ -1,4 +1,4 @@
-# Regulatory Exam and RFI Orchestrator (Cop2) runtime configuration.
+# Regulatory Exam and RFI Orchestrator (exam-rfi-orchestrator) runtime configuration.
 #
 # Loaded by `src/exam_rfi_orchestrator/config.py`. Point at a different file with
 # EXAMRFI_SETTINGS; a path that is named but missing is a boot error, not
@@ -218,7 +218,7 @@ adapters:
 
 
   # Tracing. Which BACKEND a deployed profile exports to is not a binding: the gcp
-  # adapter reads OTEL_EXPORTER_OTLP_ENDPOINT and sends OTLP to the Hrz5 collector when it
+  # adapter reads OTEL_EXPORTER_OTLP_ENDPOINT and sends OTLP to the agent-observability collector when it
   # is set, straight to Cloud Trace when it is not. Tracing is not essential to correctness,
   # so onprem is ABSENT rather than fatal, unlike every other onprem placeholder here.
   tracer:
@@ -226,7 +226,7 @@ adapters:
     gcp: exam_rfi_orchestrator.adapters.gcp.tracer:CloudTracerAdapter
     onprem: exam_rfi_orchestrator.adapters.onprem.tracer:OnPremTracerAdapter
 
-  # The promotion authority (Hrz4). The local adapter scores offline but REFUSES to promote:
+  # The promotion authority (model-quality-gate). The local adapter scores offline but REFUSES to promote:
   # a promotion certified by a laptop with no quality service is certified by nothing.
   evaluation:
     local: exam_rfi_orchestrator.adapters.local.evaluation:LocalOfflineEvalAdapter

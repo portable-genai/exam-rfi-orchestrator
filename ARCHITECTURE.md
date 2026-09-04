@@ -1,4 +1,4 @@
-# ARCHITECTURE: Regulatory Exam and RFI Orchestrator (Cop2)
+# ARCHITECTURE: Regulatory Exam and RFI Orchestrator (`exam-rfi-orchestrator`)
 
 Hexagonal ports-and-adapters. A pure-stdlib domain core speaks only to ports (`typing.Protocol`s);
 adapter families implement them; one env var (`EXAMRFI_PROFILE`) swaps the

@@ -6,7 +6,7 @@ keep in step.
 
 ## What this is
 
-Regulatory Exam and RFI Orchestrator (Cop2): turns an incoming regulator exam request list or
+Regulatory Exam and RFI Orchestrator (`exam-rfi-orchestrator`): turns an incoming regulator exam request list or
 supervisory inquiry into a managed, citation-backed response. It decomposes each numbered question
 into requested artefacts, runs ACL-aware retrieval as a PORT, deterministically tracks deadlines,
 owners, SLA clocks and completeness, records what it withholds and why, and drafts the response

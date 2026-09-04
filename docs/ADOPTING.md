@@ -1,6 +1,6 @@
 # Adopting this repo as your base
 
-This repository (Cop2, the Regulatory Exam and RFI Orchestrator) is a **common base** that a bank
+This repository (`exam-rfi-orchestrator`, the Regulatory Exam and RFI Orchestrator) is a **common base** that a bank
 or other regulated firm forks to build its own **exam and inquiry response engine**: a service
 that decomposes each regulator question into the artefacts it demands, runs ACL-aware retrieval to
 assemble a cited evidence pack, deterministically tracks deadlines, owners, SLA clocks and
@@ -33,7 +33,7 @@ vertical-neutral contracts and imports nothing from the vertical.
 |---|---|---|
 | **Vertical-neutral machinery** | `domain/kernel.py`, `domain/errors.py`, every Protocol in `ports/`, the container wiring in `config.py` | keep untouched |
 | **Policy (your numbers, sets and words)** | everything the `policy:` block in `config/settings.yaml` configures: the response windows and buffers, the severity bands, the staleness limits, the withhold tags, the named business calendars and their holidays, the regime caps, `min_completeness_pct_for_release`, and the approval rules; plus the jurisdiction rows in `domain/pii.py` and the metric thresholds in `eval/run_eval.py` | change deliberately (see section 4) |
-| **Vertical (the artifacts themselves)** | the Cop2 models in `domain/models.py`, the artefact taxonomy (`artefact_taxonomy.py`), the admissibility ladder (`coverage_engine.py`), the clocks (`sla_clock.py`), the release gate (`release_engine.py`), the consistency check (`consistency.py`), the exhibit numbering (`exhibit_index.py`), the orchestrator (`response_pack_service.py`), the fixture corpora and the eval golden sets | rewrite for your regime |
+| **Vertical (the artifacts themselves)** | the `exam-rfi-orchestrator` models in `domain/models.py`, the artefact taxonomy (`artefact_taxonomy.py`), the admissibility ladder (`coverage_engine.py`), the clocks (`sla_clock.py`), the release gate (`release_engine.py`), the consistency check (`consistency.py`), the exhibit numbering (`exhibit_index.py`), the orchestrator (`response_pack_service.py`), the fixture corpora and the eval golden sets | rewrite for your regime |
 
 ## 2. Core-vs-adopter-owned files (so upstream merges stay mechanical)
 
@@ -73,7 +73,7 @@ make gate
 `--dist` defaults to the `--resource` value. `--resource` is validated against the same
 `^[a-z][a-z0-9-]{2,18}$` regex the Terraform `name_prefix` variable enforces, so a stem the stack
 would refuse fails here instead of at plan time. Add `--include-docs` to sweep Markdown prose too.
-The script skips itself and renames `src/exam_rfi_orchestrator/` last. The catalog id `Cop2` is
+The script skips itself and renames `src/exam_rfi_orchestrator/` last. The catalog id `exam-rfi-orchestrator` is
 kept unless you pass `--catalog-id`. **It touches no handling tag and no policy number**, so a
 renamed fork carries a disclosure policy its counsel has never read.
 
@@ -132,14 +132,14 @@ renamed fork carries a disclosure policy its counsel has never read.
 
 ## 5. Do not duplicate the platform
 
-- **Hrz2** enterprise knowledge base: the ACL-aware retrieval this service depends on, reached as
+- `enterprise-knowledge-base`: the ACL-aware retrieval this service depends on, reached as
   a PORT. Do not build a second index here.
-- **Hrz7** human-review / maker-checker console: every outcome is routed to it (rule R8). There is
+- `human-review-console` human-review / maker-checker console: every outcome is routed to it (rule R8). There is
   no `released` path in this service.
-- **Hrz3** agent registry: publish the A2A card at `/.well-known/agent-card.json`.
-- **Hrz4** eval / quality gate: owns promotion verdicts.
-- **Hrz5** observability plus immutable WORM audit.
-- **Hrz1** guardrail gateway: **not bound**; rule R1 applies the moment untrusted document text
+- `agent-registry`: publish the A2A card at `/.well-known/agent-card.json`.
+- `model-quality-gate` eval / quality gate: owns promotion verdicts.
+- `agent-observability` plus immutable WORM audit.
+- `agent-guardrail-gateway`: **not bound**; rule R1 applies the moment untrusted document text
   reaches a live model, which it does here.
 
 The managed knowledge-base, obligations, evidence-pack and case-store adapters refuse correctly
