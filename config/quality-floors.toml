@@ -1,0 +1,27 @@
+# Narrative quality floors for the RESPONSE NARRATIVE. Owner: model risk.
+#
+# `run_eval.py` scores eight things and every one of them is deterministic: dispositions,
+# clocks, completeness, withholds, blockers, entitlement, PII, and whether the draft's citations
+# and integers are grounded. `citation_grounding` is the closest thing here to a quality metric
+# and it is a predicate: a paragraph passes it by citing only exhibits it was given and writing
+# only numbers it was handed. That is a floor on honesty, not on usefulness.
+#
+# A regulator reads this paragraph. It can be perfectly grounded and still fail to say which
+# item it answers, hedge the completeness figure into meaninglessness, omit the deadline the
+# examiner is actually counting, or promise a document the firm never agreed to produce. None of
+# those is ungrounded; all four are wrong, and only a judgement catches them.
+#
+# Two bars, and the difference between them is the point:
+#   floor   below this the profile MUST NOT serve this vertical. Not "degraded". Unfit.
+#   target  at or above this the profile is at full quality. Between the two is DEGRADED.
+schema = "quality-floors/v1"
+owner = "model risk (the model-quality-gate promotion authority)"
+
+[verticals.exam-rfi-orchestrator]
+floor = 0.70
+target = 0.90
+note = """A paragraph a supervisor reads, with the firm's name on it, inside a statutory clock. \
+The floor is higher than a marketing vertical's because the audience is a regulator and the \
+cost of a hedged or incomplete answer is a follow-up request against a shorter deadline, not a \
+weaker click-through. It is not 1.0 because a paragraph that omits one secondary exhibit \
+reference is worse than one that names it and is not a paragraph that must never be sent."""
