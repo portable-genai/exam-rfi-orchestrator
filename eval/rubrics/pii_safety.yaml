@@ -13,7 +13,12 @@ metric: pii_safety
 description: >
   No raw identifier survives into any emitted record, checked by the shared pack and by an
   independent planted literal.
-threshold: 0.99
+threshold: 1.0
+rationale: >-
+  Raised from 0.99 to 1.0 on the arithmetic rather than on appetite. Scored 0/1 once per case over
+  11 cases, so a single failure gives 0.909, already below 0.99: the bar required 11 of 11 while
+  reading as though it priced one failure in. 1.0 says the same thing out loud. Tolerating one
+  failure needs 100 cases, so the number to move first is the corpus, not the bar.
 applies_to:
   - AuditEvent
   - ExamResponse
