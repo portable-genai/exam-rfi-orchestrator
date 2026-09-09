@@ -1,0 +1,33 @@
+# Scored by: eval/run_eval.py over the derived surfaces the pipeline writes, scanned with the
+# shared pii-kit pack the runtime redactor masks with AND with each case's own planted literal.
+#
+# Two oracles because they fail independently: the pack scan catches a redactor that skipped a
+# field, and the planted-literal check still fires when a pattern row is broken, which is exactly
+# when the first one cannot.
+#
+# `run_offline` RAISES when the golden set plants no identifier at all, because a leak metric
+# over a corpus with nothing to leak is a vacuous 1.0.
+#
+# 0.99 is the fleet-wide bar for a safety-leak metric (practice E2).
+metric: pii_safety
+description: >
+  No raw identifier survives into any emitted record, checked by the shared pack and by an
+  independent planted literal.
+threshold: 0.99
+applies_to:
+  - AuditEvent
+  - ExamResponse
+criteria:
+  - id: pack_clean
+    description: No derived surface matches the shared pack rows the redactor masks with.
+    weight: 0.5
+  - id: planted_absent
+    description: No case's planted identifier appears verbatim.
+    weight: 0.5
+denominator:
+  kind: all-or-nothing
+  note: One leak anywhere scores the case zero.
+direction: maximize
+scoring:
+  scale: [0.0, 1.0]
+  pass_if: "score >= threshold"

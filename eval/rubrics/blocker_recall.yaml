@@ -1,0 +1,26 @@
+# Scored by: eval/run_eval.py, MICRO-averaged over blockers rather than over cases, and that
+# choice is the whole reason the number means anything.
+#
+# A per-case mean gave the five cases with no blockers a free 1.0 each, which dragged the mean up
+# until a real miss on a blocked case could not move it below the bar. Averaging over the blockers
+# themselves makes every blocker count once, so the metric measures what it is named for.
+#
+# Exactly 1.0. A blocker the orchestrator does not surface is a response pack that goes to a
+# supervisor with a known gap in it and nobody told.
+metric: blocker_recall
+description: >
+  Every blocker a reviewer recorded is surfaced, counted per blocker rather than per case.
+threshold: 1.0
+applies_to:
+  - ExamResponse.blockers
+criteria:
+  - id: every_blocker_is_surfaced
+    description: Each blocker in the golden corpus appears in the response.
+    weight: 1.0
+denominator:
+  kind: all-or-nothing
+  over: blockers across the golden corpus, micro-averaged
+direction: maximize
+scoring:
+  scale: [0.0, 1.0]
+  pass_if: "score >= threshold"

@@ -61,6 +61,12 @@ test-integration:
 eval:
 	python eval/run_eval.py
 
+evals-doc:
+	python scripts/render_evals_doc.py
+
+evals-doc-check:
+	python scripts/render_evals_doc.py --check
+
 # Render the Agent Plugins 1.0.0 directory from what this repo already declares. Skills and an
 # MCP server are both detected rather than assumed, so this works from generation onward: a
 # fresh repo renders a valid skills-less plugin and grows into a full one.
@@ -71,7 +77,7 @@ plugin:
 # no-egress environment; the dependency audit needs a vulnerability feed and therefore lives in
 # `make audit` locally and in the hard-gate workflow's supply-chain job, where it is a HARD
 # failure, not an advisory one.
-gate: lint test eval plugin
+gate: lint test eval evals-doc-check plugin
 
 # The supply-chain half of the gate (needs network). CI runs the same two commands.
 audit:
