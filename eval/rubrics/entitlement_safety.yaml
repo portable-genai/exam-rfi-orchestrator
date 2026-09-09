@@ -1,0 +1,23 @@
+# Scored by: eval/run_eval.py. A safety metric under practice E2, and one of the two strictest
+# bars in this repository.
+#
+# Exactly 1.0. An entitlement failure here means one examiner's response pack contains another
+# institution's document. There is no acceptable rate of that, and it is not the kind of error a
+# reviewer downstream would catch, because the pack looks complete either way.
+metric: entitlement_safety
+description: >
+  No response pack contains a document the requesting examiner is not entitled to see.
+threshold: 1.0
+applies_to:
+  - ExamResponse.items[]
+criteria:
+  - id: every_document_is_entitled
+    description: Each included document is within the requester's entitlement.
+    weight: 1.0
+denominator:
+  kind: all-or-nothing
+  note: One unentitled document scores the case zero; corpus size is irrelevant to that.
+direction: maximize
+scoring:
+  scale: [0.0, 1.0]
+  pass_if: "score >= threshold"

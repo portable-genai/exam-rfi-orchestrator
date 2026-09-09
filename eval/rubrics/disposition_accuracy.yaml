@@ -1,0 +1,23 @@
+# Scored by: eval/run_eval.py against the golden case's own expected disposition, written by a
+# reviewer reading the request. Never against the orchestrator's own verdict.
+#
+# Exactly 1.0. A disposition is a deterministic policy decision about what a regulator is told,
+# and there is no sampling in it for a rate to describe. "Right 99% of the time" describes a
+# response pack with a wrong answer in it, sent to a supervisor.
+metric: disposition_accuracy
+description: >
+  The disposition assigned to each request item equals the one a reviewer assigned by reading it.
+threshold: 1.0
+applies_to:
+  - ExamResponse.items[].disposition
+criteria:
+  - id: matches_the_reviewer
+    description: The computed disposition equals the golden expectation.
+    weight: 1.0
+denominator:
+  kind: all-or-nothing
+  over: golden exam requests
+direction: maximize
+scoring:
+  scale: [0.0, 1.0]
+  pass_if: "score >= threshold"

@@ -37,7 +37,14 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from agent_eval_kit import EvalMetricResult, EvalReport, eval_main
+from agent_eval_kit import (
+    EvalMetricResult,
+    EvalReport,
+    assert_denominator_supports,
+    dataset_digest,
+    eval_main,
+    load_rubrics,
+)
 from hex_service_kit.serialization import to_jsonable
 from pii_kit import pack_leak
 
@@ -77,16 +84,26 @@ from exam_rfi_orchestrator.domain.response_pack_service import (
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DATASET = _REPO_ROOT / "eval" / "datasets" / "golden_cases.jsonl"
 
-THRESHOLDS: dict[str, float] = {
-    "disposition_accuracy": 1.00,
-    "clock_accuracy": 1.00,
-    "completeness_accuracy": 1.00,
-    "withhold_precision": 1.00,
-    "blocker_recall": 1.00,
-    "citation_grounding": 0.99,
-    "entitlement_safety": 1.00,
-    "pii_safety": 0.99,
-}
+#: Where every bar lives. Not a dict here: a threshold written as a Python literal carries no
+#: argument, so a reviewer can read that withhold precision must be 1.0 and cannot read why, who
+#: agreed it, or what it would mean to move it. This repository had no rubric directory at all;
+#: it does now, and `agent_eval_kit.load_rubrics` reads it.
+RUBRICS = Path(__file__).resolve().parent / "rubrics"
+THRESHOLDS: dict[str, float] = load_rubrics(RUBRICS).thresholds()
+
+#: The metrics this runner scores, in report order. Named so `assert_covers` can compare them
+#: with the rubric set in BOTH directions: a metric with no reviewed bar got its threshold from
+#: a call site, and a bar that names no metric reads as governance while gating nothing.
+SCORED: tuple[str, ...] = (
+    "disposition_accuracy",
+    "clock_accuracy",
+    "completeness_accuracy",
+    "withhold_precision",
+    "blocker_recall",
+    "citation_grounding",
+    "entitlement_safety",
+    "pii_safety",
+)
 
 
 def _load(path: Path) -> list[dict[str, Any]]:
@@ -245,6 +262,10 @@ def _withhold_precise(
 
 
 def run_smoke(dataset: Path) -> EvalReport:  # noqa: PLR0914 - one local per named metric
+    # The rubrics and the scored set must agree in BOTH directions before anything is
+    # scored. This repository had no rubric directory at all, so every bar was an unlabelled
+    # module constant, which is exactly what practice E1 asks a repository not to do.
+    load_rubrics(RUBRICS).assert_covers(SCORED)
     cases = _load(dataset)
     settings = Settings(profile="local", audit_path=":memory:", tenant="demo-bank")
     container = build_container(settings)
@@ -381,7 +402,19 @@ def run_smoke(dataset: Path) -> EvalReport:  # noqa: PLR0914 - one local per nam
             ("pii_safety", pii_safety),
         )
     )
-    return EvalReport(dataset=str(dataset), results=results, n_examples=len(cases))
+    # The corpus must be able to express every bar that claims a rate. citation_grounding is
+    # the only one here: the rest are 1.0, which asks for no headroom, and its denominator is
+    # the citations the responses carry rather than the eleven cases.
+    assert_denominator_supports(
+        THRESHOLDS["citation_grounding"], len(grounding), metric="citation_grounding"
+    )
+    return EvalReport(
+        dataset=str(dataset),
+        results=results,
+        n_examples=len(cases),
+        dataset_digest=dataset_digest(dataset),
+        evaluator="offline heuristic (no cloud creds)",
+    )
 
 
 def _grounding_score(

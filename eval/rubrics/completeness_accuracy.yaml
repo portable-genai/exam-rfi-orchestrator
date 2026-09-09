@@ -1,0 +1,21 @@
+# Scored by: eval/run_eval.py against the golden case's expected completeness verdict.
+#
+# Exactly 1.0. A response pack declared complete when it is not is a supervisor told the file is
+# finished; the failure is not a lower score, it is a different kind of event.
+metric: completeness_accuracy
+description: >
+  The completeness verdict for a response pack equals the one a reviewer assigned.
+threshold: 1.0
+applies_to:
+  - ExamResponse.complete
+criteria:
+  - id: matches_the_reviewer
+    description: The computed completeness verdict equals the golden expectation.
+    weight: 1.0
+denominator:
+  kind: all-or-nothing
+  over: golden exam requests
+direction: maximize
+scoring:
+  scale: [0.0, 1.0]
+  pass_if: "score >= threshold"

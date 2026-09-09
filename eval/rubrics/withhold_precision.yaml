@@ -1,0 +1,27 @@
+# Scored by: eval/run_eval.py over documents the golden corpus tags as hard-withhold.
+#
+# The corpus precondition beside this metric is the part worth reading. `run_offline` RAISES when
+# no document in the fixture carries a hard-withhold tag, because withhold precision over a
+# corpus with nothing to withhold is a vacuous 1.0: the metric would report perfect judgement
+# about a decision it never had to make. A metric that cannot be vacuous is worth more than a
+# metric with a high score.
+#
+# Exactly 1.0. Withholding a document from a regulator is a legal position, not a preference, and
+# withholding one that should have been produced is the failure that ends the engagement.
+metric: withhold_precision
+description: >
+  Every document the orchestrator withholds is one the corpus marks as legitimately withheld.
+threshold: 1.0
+applies_to:
+  - ExamResponse.items[].withheld
+criteria:
+  - id: withheld_is_tagged_withheld
+    description: Each withheld document carries the corpus's hard-withhold tag.
+    weight: 1.0
+denominator:
+  kind: all-or-nothing
+  over: documents the corpus tags hard-withhold
+direction: maximize
+scoring:
+  scale: [0.0, 1.0]
+  pass_if: "score >= threshold"
