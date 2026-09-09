@@ -1,4 +1,4 @@
-.PHONY: install install-unlocked lock lint fmt test test-integration eval plugin gate audit run-api \
+.PHONY: install install-unlocked lock lint fmt test test-integration eval eval-narrative plugin gate audit run-api \
         demo demo-selftest demo-static demo-server portability docs-check tf-check \
         ui-install ui-check ui-dev drop-ui
 
@@ -61,6 +61,13 @@ test-integration:
 eval:
 	python eval/run_eval.py
 
+# The half a predicate cannot score. `citation_grounding` proves a paragraph cites only what it
+# was given; nothing there reads whether the paragraph is one the firm should send to a
+# regulator. Offline, no model, no credentials: the judge is deterministic and named on the
+# command line, never read from the environment.
+eval-narrative:
+	python eval/run_narrative_eval.py
+
 evals-doc:
 	python scripts/render_evals_doc.py
 
@@ -77,7 +84,7 @@ plugin:
 # no-egress environment; the dependency audit needs a vulnerability feed and therefore lives in
 # `make audit` locally and in the hard-gate workflow's supply-chain job, where it is a HARD
 # failure, not an advisory one.
-gate: lint test eval evals-doc-check plugin
+gate: lint test eval eval-narrative evals-doc-check plugin
 
 # The supply-chain half of the gate (needs network). CI runs the same two commands.
 audit:

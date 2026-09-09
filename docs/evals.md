@@ -76,14 +76,42 @@ Scored over 11 golden exam requests.
   corpus with no hard-withhold tag, because withhold precision over a corpus with nothing
   to withhold reports perfect judgement about a decision it never had to make.
 
+## Where the narrative floor comes from
+
+`citation_grounding` is a PREDICATE. A paragraph passes it by citing only exhibits it was given
+and writing only numbers it was handed, which is a floor on honesty and not on usefulness. A
+regulator reads this paragraph, with the firm's name on it, inside a statutory clock, and it can
+be perfectly grounded and still be one the firm must not send.
+
+`eval/run_narrative_eval.py` judges six paragraphs from the golden cases against written
+criteria, each written once per profile, banded against `config/quality-floors.toml`. The floor
+is 0.70 and the target 0.90, higher than a marketing vertical's because the audience is a
+regulator and the cost of a hedged answer is a follow-up request against a shorter deadline.
+
+The defects in the `regressed` column are the point, and they are specific rather than generic
+badness. Each is a sentence somebody would write to be helpful, each would pass a grounding
+predicate reading it in isolation, and each is worse than saying nothing:
+
+- a **breach reported as a deadline**: "produced within the agreed timetable, due 10 March 2027",
+  on an item whose deadline passed on 10 March;
+- an **access gap reported as an absence**: "we are unable to locate one further record and no
+  such record is held", where the firm holds it and the preparer is not entitled to it;
+- **withheld material reported as nothing withheld**, with the withheld content then summarised
+  anyway in the next sentence;
+- **stale evidence reported as current**, on the one item held precisely because its evidence
+  predates the period it is offered for.
+
+The `reduced` column is a thinner paragraph rather than a wrong one, and the table expects it to
+land DEGRADED. A profile that quietly got better fails this too, because a band nobody predicted
+is a change nobody reviewed.
+
 ## What is NOT measured here
 
 Naming this is part of the page, because an unmeasured claim that goes unmentioned reads as a
 measured one.
 
-- **The response narrative's prose.** Whether the drafted response reads as a complete, defensible
-  answer to the request is a judgement and nothing judges it. That is the largest remaining gap
-  here.
+- **A real model's words**, still. See the section below on what the judged half does and does
+  not close.
 - **A real model's words.** Every metric scores a deterministic core against a deterministic fake
   model adapter, so `citation_grounding` measures the VALIDATOR rather than a model's restraint.
 - **Production traffic.** Everything here is a golden set. Nothing samples live requests.
