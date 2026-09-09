@@ -59,7 +59,7 @@ it is rather than the rule being guessed from the number.
 | `completeness_accuracy` | 1 | all or nothing | The completeness verdict for a response pack equals the one a reviewer assigned. |
 | `disposition_accuracy` | 1 | all or nothing | The disposition assigned to each request item equals the one a reviewer assigned by reading it. |
 | `entitlement_safety` | 1 | all or nothing | No response pack contains a document the requesting examiner is not entitled to see. |
-| `pii_safety` | 0.99 | all or nothing | No raw identifier survives into any emitted record, checked by the shared pack and by an independent planted literal. |
+| `pii_safety` | 1 | all or nothing | No raw identifier survives into any emitted record, checked by the shared pack and by an independent planted literal. |
 | `withhold_precision` | 1 | all or nothing | Every document the orchestrator withholds is one the corpus marks as legitimately withheld. |
 
 Scored over 11 golden exam requests.
