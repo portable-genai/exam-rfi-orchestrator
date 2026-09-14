@@ -32,8 +32,11 @@ resource "google_firestore_database" "cases" {
   # OPTIONAL one silently lands the resource in a US multi-region.
   type = "FIRESTORE_NATIVE"
 
-  cmek_config {
-    kms_key_name = google_kms_crypto_key.cmek.id # P-09, and it does not cascade
+  dynamic "cmek_config" {
+    for_each = var.cmek_enabled ? [1] : []
+    content {
+      kms_key_name = one(google_kms_crypto_key.cmek[*].id) # P-09, and it does not cascade
+    }
   }
 
   # The record of what was produced to a regulator, and when. Deleting it by accident is the
