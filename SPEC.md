@@ -106,8 +106,11 @@ Locked decisions, pinned stack, contracts. This document is the deepest authorit
   PACK routes unconditionally, including when every item in it is clean, because the contract is
   that a regulator response is approved before it leaves the firm: a clean pack routes for
   APPROVAL rather than for rescue. The flag alone is not the escalation. The response carries
-  `review_ref`. The managed adapter refuses to run with no console configured rather than
-  swallowing the escalation.
+  `review_ref` and `review_routing` (`routed`, `failed`, `off`, `not_required`) for the pack
+  and for each item. Under the managed profile, routing on with no console configured refuses
+  at boot; `EXAMRFI_REVIEW_ROUTING=off` is the stated way to run without it. A hand-off that
+  fails at request time is reported as `failed` with an empty reference rather than failing the
+  already-audited assessment.
 - **The approval count has exactly one owner.** Rule R3 in the engine decides it (two for a pack,
   two for an instrument in `policy.dual_control_instruments`, two at CRITICAL severity, otherwise
   one) and `adapters/_review_payload.py` READS it. A severity-keyed table in the adapter and this

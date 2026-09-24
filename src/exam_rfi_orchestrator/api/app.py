@@ -67,6 +67,7 @@ from hex_service_kit.web import (
     make_require_service_caller,
 )
 
+from ..adapters.controls import RecordingReviewRouter
 from ..config import (
     LOCAL_PROFILE,
     Container,
@@ -395,6 +396,7 @@ def response_pack(
 
     assessments = []
     item_reviews: dict[str, str] = {}
+    item_outcomes: dict[str, str] = {}
     for wire_item in request.items:
         topic = _resolve_topic(service, wire_item.item_ref, wire_item.topic, wire_item.question)
         item = RequestItem(
@@ -426,10 +428,12 @@ def response_pack(
                 detail=f"items[].evidence_pack_ref: {exc}",
             ) from exc
         if assessment.requires_human_review:
-            reference = container.review_router.route(
-                assessment, maker=principal.actor, tenant=tenant
-            )
+            # The hand-off never fails an already-assessed, already-audited item; the response
+            # says what happened to it instead (the fleet's runtime-control contract).
+            item_routing = RecordingReviewRouter(container.review_router)
+            reference = item_routing.route(assessment, maker=principal.actor, tenant=tenant)
             item_reviews[assessment.item_ref] = reference
+            item_outcomes[assessment.item_ref] = item_routing.outcome.value
             service.record_case(regulator_request, assessment, tenant=tenant, review_ref=reference)
         assessments.append(assessment)
 
@@ -437,9 +441,15 @@ def response_pack(
         regulator_request, assessments, actor=principal.actor, tenant=tenant, as_of=as_of
     )
     # P2: the pack always routes, including when every item in it is clean.
-    review_ref = container.review_router.route(pack, maker=principal.actor, tenant=tenant)
+    pack_routing = RecordingReviewRouter(container.review_router)
+    review_ref = pack_routing.route(pack, maker=principal.actor, tenant=tenant)
     return ResponsePackResponse.from_domain(
-        pack, regime=request.regime, review_ref=review_ref, item_reviews=item_reviews
+        pack,
+        regime=request.regime,
+        review_ref=review_ref,
+        review_routing=pack_routing.outcome.value,
+        item_reviews=item_reviews,
+        item_routing=item_outcomes,
     )
 
 

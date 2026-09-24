@@ -12,6 +12,7 @@ retrieved, unlock a privileged document, move a regulatory deadline or lower the
 from __future__ import annotations
 
 from datetime import date
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -255,8 +256,11 @@ class ItemResponse(BaseModel):
     severity: str
     decision: str
     requires_human_review: bool
-    #: Where the escalation WENT (rule R8). Empty only when the item did not escalate.
+    #: Where the escalation WENT (rule R8). Empty unless ``review_routing`` is ``routed``.
     review_ref: str = ""
+    #: What happened to the hand-off: routed, failed, off or not_required. ``failed`` means it
+    #: is NOT queued for review, and the console says so.
+    review_routing: Literal["routed", "failed", "off", "not_required"] = "not_required"
     completeness_pct: int
     satisfied_mandatory: int
     total_mandatory: int
@@ -276,7 +280,9 @@ class ItemResponse(BaseModel):
     citations: list[CitationModel] = []
 
     @classmethod
-    def of(cls, item: ItemAssessment, *, review_ref: str = "") -> ItemResponse:
+    def of(
+        cls, item: ItemAssessment, *, review_ref: str = "", review_routing: str = "not_required"
+    ) -> ItemResponse:
         return cls(
             item_ref=item.item_ref,
             topic=item.topic.value,
@@ -286,6 +292,7 @@ class ItemResponse(BaseModel):
             decision=item.decision.value,
             requires_human_review=item.requires_human_review,
             review_ref=review_ref,
+            review_routing=review_routing,  # type: ignore[arg-type]
             completeness_pct=item.completeness_pct,
             satisfied_mandatory=item.satisfied_mandatory,
             total_mandatory=item.total_mandatory,
@@ -320,8 +327,12 @@ class ResponsePackResponse(BaseModel):
     summary: str
     #: Always true for a pack: the response is maker-checker approved before it leaves the firm.
     requires_human_review: bool
-    #: Never empty for a pack: rule R8's evidence that the approval was ROUTED, not merely flagged.
+    #: Rule R8's evidence that the approval was ROUTED, not merely flagged. Empty exactly when
+    #: ``review_routing`` is not ``routed``.
     review_ref: str = ""
+    #: What happened to the hand-off: routed, failed, off or not_required. ``failed`` means it
+    #: is NOT queued for review, and the console says so.
+    review_routing: Literal["routed", "failed", "off", "not_required"] = "not_required"
     release_state: str
     release_blockers: list[str] = []
     required_approvals: int
@@ -341,9 +352,12 @@ class ResponsePackResponse(BaseModel):
         *,
         regime: str = "",
         review_ref: str = "",
+        review_routing: str = "not_required",
         item_reviews: dict[str, str] | None = None,
+        item_routing: dict[str, str] | None = None,
     ) -> ResponsePackResponse:
         routed = item_reviews or {}
+        outcomes = item_routing or {}
         return cls(
             request_id=pack.request_id,
             reference=pack.reference,
@@ -357,13 +371,18 @@ class ResponsePackResponse(BaseModel):
             summary=pack.summary,
             requires_human_review=pack.requires_human_review,
             review_ref=review_ref,
+            review_routing=review_routing,  # type: ignore[arg-type]
             release_state=pack.release_state.value,
             release_blockers=[kind.value for kind in pack.release_blockers],
             required_approvals=pack.required_approvals,
             completeness_pct=pack.completeness_pct,
             sla=SlaModel.of(pack.sla),
             items=[
-                ItemResponse.of(item, review_ref=routed.get(item.item_ref, ""))
+                ItemResponse.of(
+                    item,
+                    review_ref=routed.get(item.item_ref, ""),
+                    review_routing=outcomes.get(item.item_ref, "not_required"),
+                )
                 for item in pack.items
             ],
             document_index=[ExhibitModel.of(e) for e in pack.document_index],

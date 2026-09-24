@@ -144,6 +144,23 @@ interface Narrative {
   proposed_artefacts?: string[];
 }
 
+// What happened to a human-review hand-off, in the words the user needs. An item or pack that
+// escalated but is not queued must say so rather than read as reviewed.
+const REVIEW_ROUTING_TEXT: Record<string, string> = {
+  routed: "Sent to the review console",
+  failed: "Could not reach the review console; not queued for review",
+  off: "Review routing is off in this deployment; not queued for review",
+  not_required: "No review needed",
+};
+
+function routingText(routing: string | undefined, reference: string | undefined): string {
+  const text = REVIEW_ROUTING_TEXT[routing ?? ""];
+  if (!text) {
+    return reference || "not routed";
+  }
+  return routing === "routed" && reference ? text + " (" + reference + ")" : text;
+}
+
 interface ItemAnswer {
   item_ref: string;
   topic: string;
@@ -152,6 +169,7 @@ interface ItemAnswer {
   severity: string;
   requires_human_review: boolean;
   review_ref?: string;
+  review_routing?: string;
   completeness_pct: number;
   satisfied_mandatory: number;
   total_mandatory: number;
@@ -176,6 +194,7 @@ interface PackAnswer {
   summary: string;
   requires_human_review: boolean;
   review_ref?: string;
+  review_routing?: string;
   release_state: string;
   release_blockers: string[];
   required_approvals: number;
@@ -589,6 +608,7 @@ export default function Home() {
                 <th>Owner</th>
                 <th>Exhibits</th>
                 <th>Blockers</th>
+                <th>Review</th>
                 <th />
               </tr>
             </thead>
@@ -605,6 +625,11 @@ export default function Home() {
                   <td>{item.owner || "UNASSIGNED"}</td>
                   <td>{item.exhibits.length}</td>
                   <td>{item.blockers.length}</td>
+                  <td data-review-routing={item.review_routing}>
+                    {item.requires_human_review
+                      ? routingText(item.review_routing, item.review_ref)
+                      : "No review needed"}
+                  </td>
                   <td>
                     <button
                       type="button"
@@ -718,8 +743,10 @@ export default function Home() {
                 <td>{pack.required_approvals}</td>
               </tr>
               <tr>
-                <td>Review reference</td>
-                <td>{pack.review_ref || "not routed"}</td>
+                <td>Review routing</td>
+                <td data-review-routing={pack.review_routing}>
+                  {routingText(pack.review_routing, pack.review_ref)}
+                </td>
               </tr>
               <tr>
                 <td>Named release blockers</td>

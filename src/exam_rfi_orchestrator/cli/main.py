@@ -18,6 +18,7 @@ from typing import Any
 from hex_service_kit.identity import RequestContext
 from hex_service_kit.logging import configure_logging
 
+from ..adapters.controls import RecordingReviewRouter
 from ..config import build_container
 from ..domain.kernel import utcnow
 from ..domain.models import (
@@ -127,11 +128,10 @@ def main(argv: list[str] | None = None) -> int:
         if assessment.requires_human_review:
             # Rule R8 on the CLI path too: the same escalation, the same router. A surface that
             # only printed the flag would be a second place for an escalation to stop.
-            reference = container.review_router.route(
-                assessment, maker=principal.actor, tenant=tenant
-            )
+            item_routing = RecordingReviewRouter(container.review_router)
+            reference = item_routing.route(assessment, maker=principal.actor, tenant=tenant)
             service.record_case(request, assessment, tenant=tenant, review_ref=reference)
-            print(f"  routed to human review: {reference}")
+            print(f"  human review hand-off : {item_routing.outcome.value} {reference}".rstrip())
         assessments.append(assessment)
 
     pack = service.assemble_pack(
@@ -142,8 +142,9 @@ def main(argv: list[str] | None = None) -> int:
         f"release={pack.release_state.value} approvals={pack.required_approvals}"
     )
     # P2: a pack always routes, including a clean one.
-    pack_ref = container.review_router.route(pack, maker=principal.actor, tenant=tenant)
-    print(f"  routed for approval: {pack_ref}")
+    pack_routing = RecordingReviewRouter(container.review_router)
+    pack_ref = pack_routing.route(pack, maker=principal.actor, tenant=tenant)
+    print(f"  approval hand-off: {pack_routing.outcome.value} {pack_ref}".rstrip())
     return 0
 
 
