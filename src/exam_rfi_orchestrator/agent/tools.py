@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Any
 from hex_service_kit.serialization import to_jsonable
 from pii_kit import redact
 
+from ..adapters.controls import RecordingReviewRouter
 from ..config import Container, Settings, build_container
 from ..domain.kernel import utcnow
 from ..domain.models import (
@@ -116,9 +117,9 @@ def assess_request_item(
 
     Returns:
       A JSON-safe result dict with every string masked for personal data (P-04: a tool result
-      goes into a model's context), plus ``review_ref``: where the escalation WENT. It is empty
-      only when the item did not escalate, so a caller can tell a routed escalation from a flag
-      nobody read.
+      goes into a model's context), plus ``review_ref``: where the escalation WENT, and
+      ``review_routing``: routed, failed, off or not_required. The reference is empty unless the
+      hand-off was routed, so a caller can tell a routed escalation from one that stopped.
     """
     container = _container(settings)
     service = build_service(container)
@@ -155,9 +156,10 @@ def assess_request_item(
         tenant=resolved_tenant,
         as_of=date.fromisoformat(as_of) if as_of else utcnow().date(),
     )
+    routing = RecordingReviewRouter(container.review_router)
     review_ref = ""
     if assessment.requires_human_review:
-        review_ref = container.review_router.route(assessment, maker=actor, tenant=resolved_tenant)
+        review_ref = routing.route(assessment, maker=actor, tenant=resolved_tenant)
         service.record_case(
             supervisory_request, assessment, tenant=resolved_tenant, review_ref=review_ref
         )
@@ -167,6 +169,7 @@ def assess_request_item(
     # Attached after the redaction pass: it is a routing reference, not narrative text, and
     # masking an identifier would break the caller's ability to look the review up.
     payload["review_ref"] = review_ref
+    payload["review_routing"] = routing.outcome.value
     return payload
 
 
