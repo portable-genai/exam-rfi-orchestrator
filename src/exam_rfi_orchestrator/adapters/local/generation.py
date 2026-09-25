@@ -20,6 +20,8 @@ from __future__ import annotations
 import json
 import re
 
+from hex_service_kit import provenance
+
 from ...config import Settings
 from ...domain.artefact_taxonomy import REQUIRED_ARTEFACTS
 from ...domain.models import ArtefactClass, RequestTopic
@@ -68,6 +70,8 @@ class LocalGenerationAdapter:
             payload = self._normalise(request.prompt)
         else:
             payload = self._narrate(request)
+        # The stub answered: it notes the same name ``generator_model`` reports under ``local``.
+        provenance.note_model(_MODEL)
         return GenerationResponse(text=json.dumps(payload), model=_MODEL)
 
     # ------------------------------------------------------------------ jobs

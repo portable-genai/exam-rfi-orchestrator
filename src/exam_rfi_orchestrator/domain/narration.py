@@ -165,6 +165,7 @@ def build_narrative_request(
         'Return JSON of the form {"narrative": "<one paragraph>", '
         '"proposed_artefacts": ["<artefact class>", ...]}.'
     )
+    # Free (no temperature sent): drafting prose. The grounding rules, not the sampler, bound it.
     return GenerationRequest(
         system=_DRAFT_SYSTEM,
         prompt=prompt,
@@ -182,8 +183,12 @@ def build_classify_request(item_ref: str, question: str) -> GenerationRequest:
         f"Topics: {topics}\nArtefact classes: {artefacts}\n"
         'Return JSON of the form {"topic": "<topic>", "artefacts": ["<artefact class>", ...]}.'
     )
+    # Pinned: a classification into a closed set, compared against the engine's own topic.
     return GenerationRequest(
-        system=_CLASSIFY_SYSTEM, prompt=prompt, response_keys=("topic", "artefacts")
+        system=_CLASSIFY_SYSTEM,
+        prompt=prompt,
+        response_keys=("topic", "artefacts"),
+        temperature=0.0,
     )
 
 
@@ -201,7 +206,10 @@ def build_normalise_request(
         'Return JSON of the form {"facts": [{"key": "<assertion key>", "value": "<value>", '
         '"exhibit": "<exhibit reference>"}, ...]}.'
     )
-    return GenerationRequest(system=_NORMALISE_SYSTEM, prompt=prompt, response_keys=("facts",))
+    # Pinned: an extraction into a closed key vocabulary, checked against the indexed exhibits.
+    return GenerationRequest(
+        system=_NORMALISE_SYSTEM, prompt=prompt, response_keys=("facts",), temperature=0.0
+    )
 
 
 def _parsed(text: str) -> dict[str, object] | None:
