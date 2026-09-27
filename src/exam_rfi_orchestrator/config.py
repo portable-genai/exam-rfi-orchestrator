@@ -516,9 +516,8 @@ class Settings:
     iap_audience: str = ""
     #: Tenant partition asserted on outbound reviews when the principal carries none.
     tenant: str = ""
-    #: GCP project the managed tracer exports spans to, and the one Cloud Logging names in a
-    #: trace resource path. Empty is valid and common: on Cloud Run the exporter resolves the
-    #: project from the metadata server, so this only has to be set where that is unavailable.
+    #: GCP project Cloud Logging names in a trace resource path. The tracer does not read it: spans
+    #: go through the agent-observability collector, which owns the destination project.
     project_id: str = ""
     #: The governed enterprise corpus the knowledge-base port retrieves from. Empty means the
     #: managed adapter REFUSES every call: there is no default host, because an empty answer
