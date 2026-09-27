@@ -27,6 +27,7 @@ def build_service(container: Container | Settings | None = None) -> ResponsePack
         obligations=resolved.obligations,
         evidence_packs=resolved.evidence_packs,
         generation=resolved.generation,
+        guardrail=resolved.guardrail,
         case_store=resolved.case_store,
         policy=resolved.settings.policy,
     )

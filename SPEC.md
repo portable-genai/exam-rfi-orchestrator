@@ -92,6 +92,12 @@ Locked decisions, pinned stack, contracts. This document is the deepest authorit
   paragraph assembled from the accepted links. Nothing is ever repaired. The request builder, the
   parser and both grounding predicates are module-level pure functions, so the evaluation scores
   RAW model output through the same contract the service enforces.
+- **Guardrail (R1)**: every generation call (classification, narration, normalisation) is
+  screened through `GuardrailPort`: the prompt as sent INPUT before the model sees it, the answer
+  OUTPUT before it is parsed. A refusal, or a guardrail that cannot decide, is audited `blocked`
+  without the refused text and the model's contribution is dropped whole, exactly as for an
+  unreachable model. `EXAMRFI_GUARDRAIL=off` is the stated way to run without it; under the
+  managed profile, the guardrail on with no Model Armor template named refuses at boot.
 - **Release**: every outcome carries `release_state = held_for_checker`. `released` exists in the
   vocabulary and NO code path in this service produces it: release happens in the human-review
   console, by a person, and an operator sends the production. The guard is proved against a

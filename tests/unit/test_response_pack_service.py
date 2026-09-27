@@ -301,6 +301,7 @@ def _service_with(container: Container, **ports: object) -> ResponsePackService:
         "obligations": container.obligations,
         "evidence_packs": container.evidence_packs,
         "generation": container.generation,
+        "guardrail": container.guardrail,
         "case_store": container.case_store,
         "policy": container.settings.policy,
     }

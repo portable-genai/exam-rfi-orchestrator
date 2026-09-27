@@ -30,7 +30,8 @@ startup and Terraform serving authorization until its live integration test exis
   would be a second, unbanded decision path that still reaches an audit write.
 - `ports/` : `@runtime_checkable` Protocols (`AuditSinkPort`, `ReviewRouterPort`,
   `KnowledgeBaseReadPort`, `ObligationsReadPort`, `EvidencePackReadPort`, `GenerationPort`,
-  `CaseStorePort`; identity, tracing and evaluation use the commons'), re-exported once with the
+  `GuardrailPort`, `CaseStorePort`; identity, tracing and evaluation use the commons'),
+  re-exported once with the
   `PORT_PROTOCOLS` map. `identity.py` adds
   this service's own identity vocabulary: what an adapter DECLARES about the end-user
   authentication it provides (`VERIFIED` / `CLIENT_ASSERTED` / `UNIMPLEMENTED`), which is what the

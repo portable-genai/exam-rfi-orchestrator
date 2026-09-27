@@ -77,7 +77,7 @@ release gate and the approval rules.
 | `agent-registry` | Discovery, via the A2A card. |
 | `model-quality-gate` eval / quality gate | Owns promotion verdicts. |
 | `agent-observability` and WORM audit | Owns the immutable audit sink and traces. |
-| `agent-guardrail-gateway` | **Not bound.** Rule R1 applies here: untrusted document and question text reaches a live model. |
+| `agent-guardrail-gateway` | Bound as `ports/guardrail.py` (rule R1): every generation call screened in both directions, Model Armor under `gcp`. |
 
 ### Can I demo it without a cloud project?
 
@@ -91,6 +91,6 @@ exits non-zero when a step stops being true.
 The catalog row for `exam-rfi-orchestrator` carries the honest list. The headline items: the managed knowledge-base,
 obligations, evidence-pack and case-store adapters refuse correctly when unconfigured but their
 live payload parsing is unwired and no live upstream has been exercised; the case store's
-Firestore resources are absent from `infra/terraform/`; `agent-guardrail-gateway`, `agent-observability` and `agent-registry` are unwired;
+Firestore resources are absent from `infra/terraform/`; `agent-observability` and `agent-registry` are unwired;
 decomposition recall is unmeasured and unmeasurable offline; and the regime cap rule K3 is
 exercised by unit tests alone because every shipped register row fixes no response window.

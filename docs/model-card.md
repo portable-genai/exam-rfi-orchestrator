@@ -47,6 +47,9 @@ pure domain where the eval cannot reach it.
 - A model is reachable through exactly one port with one method. There is no second model seam in
   the request path.
 - Personal data is masked before anything is audited, and the audit stores the redacted text.
+- Every generation call is screened by the guardrail port (rule R1): the prompt as sent, before
+  the model sees it, and the answer, before it is parsed. Model Armor under `gcp`. A refusal is
+  audited `blocked` and the model's contribution is dropped whole, like an unreachable model.
 - Nothing is released. There is no code path in this service that returns `released`; every
   outcome comes back held for a checker (rule R8).
 - The service does not decide privilege. It NAMES the basis on a withholding schedule and holds
@@ -64,8 +67,6 @@ pure domain where the eval cannot reach it.
   which is a deterministic-only mode by accident rather than a designed operator action. Make it
   one and document it in the runbook.
 - **No retrieval cache**. Each run re-reaches the knowledge base.
-- **Prompt-injection screening** (rule R1). `agent-guardrail-gateway` is not bound. The inputs here are documents and
-  question text supplied by parties outside this service.
 - **Reasoning trace** (P-07). The audit carries the redacted outcome and its citations, not a
   prompt and reply pair.
 - **Managed-profile evaluation** (P-08, rule R5). The offline eval scores the deterministic

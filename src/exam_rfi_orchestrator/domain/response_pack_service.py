@@ -21,6 +21,22 @@ record whose rows name people. Masking after an immutable write is too late, and
 call site is a rule somebody eventually forgets. The audit write masks AGAIN, deliberately: it is
 the last line of defence on the immutable record and it is guarded by its own test rather than by
 the upstream masks happening to have run.
+
+Rule R1: every one of the three generation-port calls this service makes (:meth:`propose_topic`'s
+classification, :meth:`_draft`'s narration, :meth:`_normalise`'s fact extraction) goes through
+:meth:`ResponsePackService._generate_screened`, which screens the bound
+:class:`~..ports.guardrail.GuardrailPort` INPUT on the prompt AS SENT (the one string that carries
+every caller-controlled field: the item reference, the question, every retrieved title and
+snippet) before it reaches the model, and OUTPUT on the model's answer before that text is parsed
+or used. The text each screen hands back is the text used from then on, exactly as given.
+
+A refusal, and a guardrail that raised instead of deciding, are both audited ``Decision.BLOCKED``
+(never carrying the refused text) BEFORE :class:`~.errors.GuardrailBlockedError` reaches the call
+site. Narration is optional here by design, so each call site then drops the model's contribution
+WHOLE, exactly as it does for a model that could not be reached: the draft falls back to the
+deterministic paragraph with an ``ungrounded_draft`` blocker, the topic suggestion is absent, the
+normalised facts are absent. Never a partial model result and never unscreened text. An audit sink
+that refuses the BLOCKED record is not swallowed: its error reaches the caller.
 """
 
 from __future__ import annotations
@@ -34,7 +50,8 @@ from pii_kit import redact
 from ..ports.audit import AuditSinkPort
 from ..ports.case_store import CaseStorePort
 from ..ports.evidence_packs import EvidencePackReadPort
-from ..ports.generation import GenerationPort
+from ..ports.generation import GenerationPort, GenerationRequest, GenerationResponse
+from ..ports.guardrail import GuardrailPort
 from ..ports.knowledge_base import KnowledgeBaseReadPort
 from ..ports.obligations import ObligationsReadPort
 from ..ports.observability import ObservabilityTracerPort
@@ -42,8 +59,9 @@ from . import narration
 from .artefact_taxonomy import decompose
 from .consistency import KNOWN_ASSERTION_KEYS, check_consistency
 from .coverage_engine import assess_evidence
+from .errors import GuardrailBlockedError
 from .exhibit_index import number_exhibits, renumber_document_index
-from .kernel import AuditEvent, Citation, Decision, Severity, utcnow
+from .kernel import AuditEvent, Citation, Decision, Direction, Severity, utcnow
 from .models import (
     ArtefactClass,
     AssertedFact,
@@ -109,6 +127,20 @@ def _mask(text: str) -> str:
     return redact(text, PII_PATTERNS)
 
 
+def _refusal(direction: Direction, reason: str) -> str:
+    """What a refused screen says: the direction and the guardrail's reason, never the text."""
+    return f"blocked by guardrail ({direction.value}): {reason}"
+
+
+class _GenerationFailed(Exception):
+    """The generation port itself could not answer: "no model text", like a guardrail refusal.
+
+    Kept distinct from every other error so a call site degrades on exactly the two "no model
+    text" outcomes and nothing else: an audit sink refusing a BLOCKED record must still fail
+    the request rather than be absorbed into a degraded draft.
+    """
+
+
 class ResponsePackService:
     """Assemble a citation-backed, deadline-tracked response to a supervisory request."""
 
@@ -121,6 +153,7 @@ class ResponsePackService:
         obligations: ObligationsReadPort,
         evidence_packs: EvidencePackReadPort,
         generation: GenerationPort,
+        guardrail: GuardrailPort,
         case_store: CaseStorePort,
         policy: ExamPolicy,
     ) -> None:
@@ -130,13 +163,81 @@ class ResponsePackService:
         self._obligations = obligations
         self._evidence_packs = evidence_packs
         self._generation = generation
+        self._guardrail = guardrail
         self._case_store = case_store
         self._policy = policy
+
+    # ------------------------------------------------------------------ rule R1
+
+    def _generate_screened(
+        self, request: GenerationRequest, *, actor: str, action: str, job: str
+    ) -> GenerationResponse:
+        """One generation call, screened INPUT before and OUTPUT after (rule R1).
+
+        Raises :class:`~.errors.GuardrailBlockedError` (already audited BLOCKED) when either
+        screen refuses or cannot decide, and :class:`_GenerationFailed` when the model itself
+        could not answer. Both mean "no model text": the caller degrades on either. Anything
+        else, an audit sink refusing the BLOCKED record included, propagates.
+        """
+        prompt = self._screen(request.prompt, Direction.INPUT, actor=actor, action=action, job=job)
+        try:
+            response = self._generation.generate(replace(request, prompt=prompt))
+        except Exception as exc:  # noqa: BLE001 - any model failure is "no model text"
+            raise _GenerationFailed(str(exc)) from exc
+        text = self._screen(response.text, Direction.OUTPUT, actor=actor, action=action, job=job)
+        return replace(response, text=text)
+
+    def _screen(self, text: str, direction: Direction, *, actor: str, action: str, job: str) -> str:
+        """Screen one text in one direction; return the text to use from here on, or refuse.
+
+        The returned text is the verdict's ``sanitized_text`` exactly as given, including an
+        empty string: a screen that redacted everything has not asked for the original back.
+        A block, and a guardrail that raised instead of deciding, both fail CLOSED after an
+        audited BLOCKED record. When that record cannot be written either, the guardrail's own
+        error propagates (with a note saying so) rather than a degradable refusal: a refusal
+        nobody audited must fail the request, not vanish into a fallback draft.
+        """
+        try:
+            verdict = self._guardrail.screen(text, direction)
+        except Exception as exc:
+            reason = f"guardrail unavailable ({type(exc).__name__})"
+            try:
+                self._audit_blocked(actor, action, job, direction, reason)
+            except Exception as audit_exc:
+                exc.add_note(f"the BLOCKED audit record could not be written: {audit_exc!r}")
+                raise exc from None
+            raise GuardrailBlockedError(_refusal(direction, reason)) from exc
+        if not verdict.allowed or verdict.sanitized_text is None:
+            reason = verdict.reason or "refused"
+            self._audit_blocked(actor, action, job, direction, reason)
+            raise GuardrailBlockedError(_refusal(direction, reason))
+        return verdict.sanitized_text
+
+    def _audit_blocked(
+        self, actor: str, action: str, job: str, direction: Direction, reason: str
+    ) -> None:
+        """Audit a guardrail refusal BEFORE the call site degrades (rule R1/R2).
+
+        Never carries the refused text, nor the item reference or question, because either may
+        be the very thing refused: only which job was refused, in which direction, and why. No
+        severity, because nothing has been scored when a generation call is screened.
+        """
+        self._audit.record(
+            AuditEvent(
+                action=action,
+                actor=actor,
+                decision=Decision.BLOCKED,
+                severity=None,
+                redacted_summary=_mask(f"{job} {direction.value} blocked: {reason}"),
+                citations=(),
+                timestamp=utcnow(),
+            )
+        )
 
     # ------------------------------------------------------------------ classification
 
     def propose_topic(
-        self, item_ref: str, question: str
+        self, item_ref: str, question: str, *, actor: str
     ) -> tuple[RequestTopic | None, tuple[ArtefactClass, ...]]:
         """Ask the model to SUGGEST a topic and artefacts for a free-text question (job 1 of four).
 
@@ -149,14 +250,16 @@ class ResponsePackService:
         therefore NARROW the answer, which is why the surface refuses an item with no declared
         topic and names this suggestion in the refusal rather than acting on it.
 
-        An unparseable or refused classification returns ``(None, ())``, and the refusal then
-        names no suggestion rather than inventing one.
+        An unparseable, unreachable or guardrail-refused classification returns ``(None, ())``,
+        and the refusal then names no suggestion rather than inventing one. A guardrail refusal
+        is audited BLOCKED first (rule R1).
         """
+        request = narration.build_classify_request(item_ref, _mask(question))
         try:
-            response = self._generation.generate(
-                narration.build_classify_request(item_ref, _mask(question))
+            response = self._generate_screened(
+                request, actor=actor, action="propose_topic", job="classify"
             )
-        except Exception:  # noqa: BLE001 - a classification failure degrades, never decides
+        except (GuardrailBlockedError, _GenerationFailed):
             return None, ()
         return narration.parse_classification(response.text)
 
@@ -273,6 +376,8 @@ class ResponsePackService:
         narrative, narrative_blockers = self._draft(
             item,
             exhibits,
+            actor=actor,
+            action="assess_item",
             completeness=evidence.completeness_pct,
             satisfied=evidence.satisfied_mandatory,
             total=evidence.total_mandatory,
@@ -280,7 +385,7 @@ class ResponsePackService:
         )
         blockers.extend(narrative_blockers)
 
-        facts = self._normalise(item, exhibits)
+        facts = self._normalise(item, exhibits, actor=actor)
         consistency = check_consistency(facts, prior_answers)
         blockers.extend(consistency.blockers)
 
@@ -399,7 +504,7 @@ class ResponsePackService:
             severity = worse(severity, item.severity)
 
         cover_note, _ = self._draft_cover_note(
-            request, items, completeness, sla.business_days_remaining, index
+            request, items, completeness, sla.business_days_remaining, index, actor=actor
         )
         subject = f"{request.reference} response pack"
         case_ref = request.request_id
@@ -555,12 +660,18 @@ class ResponsePackService:
         item: RequestItem,
         exhibits: Sequence[Exhibit],
         *,
+        actor: str,
+        action: str,
         completeness: int,
         satisfied: int,
         total: int,
         remaining: int,
     ) -> tuple[NarrativeDraft, list[Blocker]]:
-        """Rules G1 to G3: draft, or refuse to draft, and never repair."""
+        """Rules G1 to G3: draft, or refuse to draft, and never repair.
+
+        Rule R1: a guardrail refusal in either direction discards the model's draft WHOLE, like
+        a model that could not be reached, and falls back to the deterministic paragraph.
+        """
         if not exhibits:
             # G1 NO EVIDENCE, NO DRAFT. The generation port is NOT CALLED at all.
             return (
@@ -592,8 +703,10 @@ class ResponsePackService:
         references = [exhibit.exhibit_no for exhibit in exhibits]
         fallback = narration.fallback_narrative(request.facts, exhibits)
         try:
-            response = self._generation.generate(request)
-        except Exception as exc:  # noqa: BLE001 - a refusal is a rejected draft, never a crash
+            response = self._generate_screened(request, actor=actor, action=action, job="narrate")
+        except GuardrailBlockedError as exc:
+            return self._discarded(fallback, str(exc), item, exhibits)
+        except _GenerationFailed as exc:  # a refusal is a rejected draft, never a crash
             return self._discarded(fallback, f"the generation port refused: {exc}", item, exhibits)
 
         verdict = narration.narrative_verdict(response.text, request.facts, references)
@@ -645,6 +758,8 @@ class ResponsePackService:
         completeness: int,
         remaining: int,
         index: Sequence[Exhibit],
+        *,
+        actor: str,
     ) -> tuple[NarrativeDraft, list[Blocker]]:
         """The pack cover note, held to the same two grounding predicates as an item draft."""
         if not index:
@@ -664,6 +779,8 @@ class ResponsePackService:
         return self._draft(
             stub,
             index,
+            actor=actor,
+            action="assemble_pack",
             completeness=completeness,
             satisfied=len(items),
             total=len(items),
@@ -692,23 +809,28 @@ class ResponsePackService:
         return tuple(seen.values())[:_MAX_CITATIONS]
 
     def _normalise(
-        self, item: RequestItem, exhibits: Sequence[Exhibit]
+        self, item: RequestItem, exhibits: Sequence[Exhibit], *, actor: str
     ) -> tuple[AssertedFact, ...]:
         """Ask the model to normalise the produced exhibits into asserted facts (job 2 of four).
 
         The ENGINE compares them; the model only extracts them. An unrecognised key is NOT
         filtered here: rule X1 raises a blocker for it, because dropping it silently is exactly
         what a model that renamed a key would buy.
+
+        Rule R1: a guardrail refusal (audited BLOCKED) yields no facts, like an unreachable
+        model: the exhibit titles and snippets in this prompt are retrieved text, and a refused
+        extraction contributes nothing rather than part of an answer.
         """
         if not exhibits:
             return ()
+        request = narration.build_normalise_request(
+            item.item_ref, exhibits, sorted(KNOWN_ASSERTION_KEYS)
+        )
         try:
-            response = self._generation.generate(
-                narration.build_normalise_request(
-                    item.item_ref, exhibits, sorted(KNOWN_ASSERTION_KEYS)
-                )
+            response = self._generate_screened(
+                request, actor=actor, action="assess_item", job="normalise"
             )
-        except Exception:  # noqa: BLE001 - a normalisation failure degrades, never decides
+        except (GuardrailBlockedError, _GenerationFailed):
             return ()
         by_reference = {exhibit.exhibit_no: exhibit for exhibit in exhibits}
         out: list[AssertedFact] = []

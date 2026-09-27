@@ -139,8 +139,8 @@ renamed fork carries a disclosure policy its counsel has never read.
 - `agent-registry`: publish the A2A card at `/.well-known/agent-card.json`.
 - `model-quality-gate` eval / quality gate: owns promotion verdicts.
 - `agent-observability` plus immutable WORM audit.
-- `agent-guardrail-gateway`: **not bound**; rule R1 applies the moment untrusted document text
-  reaches a live model, which it does here.
+- `agent-guardrail-gateway`: bound as `ports/guardrail.py` (rule R1). Every generation call is
+  screened in both directions; Model Armor under `gcp`, a heuristic stand-in offline.
 
 The managed knowledge-base, obligations, evidence-pack and case-store adapters refuse correctly
 when unconfigured, but their live payload parsing is unwired and no live upstream has ever been

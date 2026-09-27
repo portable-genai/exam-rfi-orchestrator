@@ -43,8 +43,10 @@ What the model can do is produce a bad draft, and every one of its four jobs has
 validator that discards output rather than repairing it. An unrecognised assertion becomes an
 `UNRECOGNISED_ASSERTION` release blocker, not a silent pass.
 
-The remaining exposure is prompt injection through document and question text, which is written by
-parties outside this service. `agent-guardrail-gateway` is **not** bound; rule R1 applies.
+Prompt injection through document and question text, which is written by parties outside this
+service, is screened by the guardrail port (rule R1, `ports/guardrail.py`, Model Armor under
+`gcp`) on every prompt before it reaches the model and on every answer before it is used. A
+refusal is audited `blocked` and the draft falls back to the deterministic paragraph.
 
 ### Where does personal data go?
 
@@ -71,7 +73,8 @@ check.
 
 - **Login.** This repo owns no authentication flow.
 - **The document index and its ACLs.** Owned by `enterprise-knowledge-base`.
-- **Guardrail screening.** Owned by `agent-guardrail-gateway`, not bound today.
+- **The guardrail's filters.** The screening policy is the Model Armor template
+  (`infra/terraform/model_armor.tf`); this repo calls it and acts on its verdict.
 - **Filing and release.** No code path here releases a pack.
 - **The correctness of document handling tags.** Privilege, restricted-filing status and
   cross-border restriction are read from the corpus. That is a data-governance dependency, and it
