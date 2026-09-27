@@ -37,6 +37,8 @@ from exam_rfi_orchestrator.domain.kernel import (
     AuditEvent,
     Citation,
     Decision,
+    Direction,
+    GuardrailVerdict,
     Severity,
 )
 from exam_rfi_orchestrator.domain.models import (
@@ -127,6 +129,10 @@ CANONICAL_GENERATION = GenerationRequest(
     facts=(("completeness_pct", "100"), ("EX-1.a-01", "EX-1.a-01 Policy")),
     response_keys=("narrative", "proposed_artefacts"),
 )
+
+#: The text every guardrail implementation is handed (rule R1): benign, so the offline family's
+#: real answer is ``allowed`` rather than a block the injection heuristic happens to catch.
+CANONICAL_GUARDRAIL_TEXT = "a routine benign question about policy"
 
 #: The case row every case-store implementation is handed.
 CANONICAL_CASE = CaseRecord(
@@ -235,6 +241,18 @@ def _generation_answered(_adapter: Any, result: Any) -> bool:
     return bool(getattr(result, "text", "").strip())
 
 
+def _guardrail_invoke(adapter: Any) -> Any:
+    return adapter.screen(CANONICAL_GUARDRAIL_TEXT, Direction.INPUT)
+
+
+def _guardrail_answered(_adapter: Any, result: Any) -> bool:
+    return (
+        isinstance(result, GuardrailVerdict)
+        and result.allowed is True
+        and result.direction is Direction.INPUT
+    )
+
+
 def _case_store_invoke(adapter: Any) -> Any:
     adapter.record(CANONICAL_CASE)
     return adapter.open_items(sample_cases.TENANT, sample_cases.ENTITLEMENTS)
@@ -309,6 +327,13 @@ CANONICAL_CALLS: dict[str, PortCase] = {
         # No model configured offline, so the managed adapter refuses rather than defaulting.
         managed_refusal=(RuntimeError,),
         detail="return raw model text for one narration request",
+    ),
+    "guardrail": PortCase(
+        invoke=_guardrail_invoke,
+        answered=_guardrail_answered,
+        # The lazy `google.cloud` import is the first thing the managed adapter's screen does.
+        managed_refusal=(ImportError,),
+        detail="screen one generation call's text and return an allow/block verdict (rule R1)",
     ),
     "case_store": PortCase(
         invoke=_case_store_invoke,

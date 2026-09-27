@@ -91,6 +91,6 @@ has no expectation, and the hosted GitHub Actions check runs that gate on every 
 
 The catalog row for `exam-rfi-orchestrator` carries the honest list. In short: the managed adapters' live payload
 parsing is unwired and no live upstream has been exercised; the case store's Firestore resources
-are absent from Terraform; `agent-guardrail-gateway`, `agent-observability` and `agent-registry` are unwired; the model-card controls (pinned model
+are absent from Terraform; `agent-observability` and `agent-registry` are unwired; the model-card controls (pinned model
 and version, token budget, kill switch, retrieval cache, reasoning trace, managed-profile eval)
 are open; and rule K3 is exercised by unit tests alone.

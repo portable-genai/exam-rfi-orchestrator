@@ -47,6 +47,10 @@ deployment accordingly: see the exposure section of [runbook.md](runbook.md).
    - `GenerationPort` -> the client's own model. Deliberately NOT absent-and-degrading like the
      tracer: a placeholder returning empty text produces a pack with no cover note that still
      looks complete. The model owns no number, so binding a weaker one changes no figure.
+   - `GuardrailPort` -> the client's own prompt and response screening (rule R1). The
+     placeholder RAISES, and the domain treats that as a refusal: every generation call is
+     audited `blocked` and falls back to deterministic text, so an unwired guardrail can never
+     let an unscreened prompt through. Bind a real screen before binding a real model.
    - `CaseStorePort` -> the client's own case store. All four methods raise, and for `waiver()`
      and `extension()` that is load-bearing: returning `None` means "no such record exists",
      which would SILENTLY withhold a waived document and SILENTLY refuse to move a granted

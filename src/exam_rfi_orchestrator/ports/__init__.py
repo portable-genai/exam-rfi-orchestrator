@@ -21,6 +21,7 @@ from .audit import AuditSinkPort
 from .case_store import CaseStorePort
 from .evidence_packs import EvidencePackReadPort
 from .generation import GenerationPort, GenerationRequest, GenerationResponse
+from .guardrail import GuardrailPort
 from .identity import (
     CLIENT_ASSERTED,
     END_USER_AUTH_ATTR,
@@ -50,6 +51,7 @@ PORT_PROTOCOLS: dict[str, type] = {
     "obligations": ObligationsReadPort,
     "evidence_packs": EvidencePackReadPort,
     "generation": GenerationPort,
+    "guardrail": GuardrailPort,
     "case_store": CaseStorePort,
 }
 
@@ -70,6 +72,7 @@ __all__ = [
     "GenerationPort",
     "GenerationRequest",
     "GenerationResponse",
+    "GuardrailPort",
     "IdentityPort",
     "KnowledgeBaseReadPort",
     "ObligationsReadPort",

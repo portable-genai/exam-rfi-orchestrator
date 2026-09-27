@@ -51,6 +51,7 @@ google-api-core==2.39.0
     #   google-cloud-appengine-logging
     #   google-cloud-core
     #   google-cloud-logging
+    #   google-cloud-modelarmor
     #   google-cloud-trace
 google-auth==2.58.1
     # via
@@ -59,6 +60,7 @@ google-auth==2.58.1
     #   google-cloud-appengine-logging
     #   google-cloud-core
     #   google-cloud-logging
+    #   google-cloud-modelarmor
     #   google-cloud-trace
     #   hex-service-kit
 google-cloud-appengine-logging==1.10.0
@@ -68,6 +70,8 @@ google-cloud-audit-log==0.6.2
 google-cloud-core==2.7.0
     # via google-cloud-logging
 google-cloud-logging==3.16.3
+    # via exam-rfi-orchestrator (pyproject.toml)
+google-cloud-modelarmor==0.7.1
     # via exam-rfi-orchestrator (pyproject.toml)
 google-cloud-trace==1.20.0
     # via opentelemetry-exporter-gcp-trace
@@ -85,6 +89,7 @@ grpcio==1.84.0
     #   google-api-core
     #   google-cloud-appengine-logging
     #   google-cloud-logging
+    #   google-cloud-modelarmor
     #   google-cloud-trace
     #   googleapis-common-protos
     #   grpc-google-iam-v1
@@ -148,6 +153,7 @@ proto-plus==1.28.4
     #   google-api-core
     #   google-cloud-appengine-logging
     #   google-cloud-logging
+    #   google-cloud-modelarmor
     #   google-cloud-trace
 protobuf==7.36.2
     # via
@@ -155,6 +161,7 @@ protobuf==7.36.2
     #   google-cloud-appengine-logging
     #   google-cloud-audit-log
     #   google-cloud-logging
+    #   google-cloud-modelarmor
     #   google-cloud-trace
     #   googleapis-common-protos
     #   grpc-google-iam-v1

@@ -50,6 +50,12 @@ output "audit_sink_writer_identity" {
   value       = google_logging_project_sink.audit_to_worm.writer_identity
 }
 
+# ------------------------------ Guardrail ----------------------------------- #
+output "model_armor_template" {
+  description = "Model Armor template id (settings.yaml model_armor.template_id)."
+  value       = google_model_armor_template.guardrail.template_id
+}
+
 # ----------------------------- Service account ------------------------------ #
 output "app_service_account" {
   description = "The serving identity. It holds no exportable key, and org policy forbids creating one."

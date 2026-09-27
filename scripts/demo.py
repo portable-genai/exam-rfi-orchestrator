@@ -1360,6 +1360,10 @@ def _exit_generation(container: Any) -> Any:
     )
 
 
+def _exit_guardrail(container: Any) -> Any:
+    return container.guardrail.screen("please summarise the item status", kernel.Direction.INPUT)
+
+
 def _exit_case_store(container: Any) -> Any:
     return container.case_store.waiver("WVR-FICTIONAL-2027-11", TENANT)
 
@@ -1381,6 +1385,7 @@ EXIT_CALLS: dict[str, Callable[[Any], Any]] = {
     "obligations": _exit_obligations,
     "evidence_packs": _exit_evidence_packs,
     "generation": _exit_generation,
+    "guardrail": _exit_guardrail,
     "case_store": _exit_case_store,
 }
 

@@ -407,7 +407,13 @@ def response_pack(
     item_reviews: dict[str, str] = {}
     item_outcomes: dict[str, str] = {}
     for wire_item in request.items:
-        topic = _resolve_topic(service, wire_item.item_ref, wire_item.topic, wire_item.question)
+        topic = _resolve_topic(
+            service,
+            wire_item.item_ref,
+            wire_item.topic,
+            wire_item.question,
+            actor=principal.actor,
+        )
         item = RequestItem(
             item_ref=wire_item.item_ref,
             question=wire_item.question,
@@ -463,7 +469,7 @@ def response_pack(
 
 
 def _resolve_topic(
-    service: ResponsePackService, item_ref: str, declared: str, question: str
+    service: ResponsePackService, item_ref: str, declared: str, question: str, *, actor: str
 ) -> RequestTopic:
     """Take the DECLARED topic, and refuse an item that names none, suggestion in hand.
 
@@ -477,7 +483,7 @@ def _resolve_topic(
     """
     if declared:
         return _topic(declared, "items[].topic")
-    suggested_topic, suggested_artefacts = service.propose_topic(item_ref, question)
+    suggested_topic, suggested_artefacts = service.propose_topic(item_ref, question, actor=actor)
     suggestion = "none could be proposed either"
     if suggested_topic is not None:
         artefacts = ", ".join(artefact.value for artefact in suggested_artefacts)

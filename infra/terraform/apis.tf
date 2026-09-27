@@ -28,6 +28,7 @@ locals {
     "cloudtrace.googleapis.com",    # tracer.py: spans, content off
     "iap.googleapis.com",           # identity.py: the one adapter that declares VERIFIED
     "secretmanager.googleapis.com", # the inbound and outbound service credentials
+    "modelarmor.googleapis.com",    # guardrail.py: screens every generation call (rule R1)
 
     # Needed by a resource this stack creates.
     "run.googleapis.com",        # the serving edge (production_edge.tf)

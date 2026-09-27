@@ -81,6 +81,18 @@ case_store_path: ${EXAMRFI_CASE_STORE_PATH:-:memory:}
 # picking a default model, and the provenance banner says so.
 generation_model: ${EXAMRFI_GENERATION_MODEL:-}
 
+# Rule R1: the Model Armor template the `gcp` guardrail adapter screens every generation call's
+# input and output through, and the regional host it calls (never the global endpoint, P-05).
+# `template_id` matches the template `infra/terraform/model_armor.tf` creates, so a zero-edit
+# deploy names a template its own Terraform provisions. Guardrail on (EXAMRFI_GUARDRAIL, unset
+# means on) under the managed profile REFUSES TO BOOT when template_id is empty and the bound
+# adapter is ModelArmorGuardrailAdapter; EXAMRFI_GUARDRAIL=off states the guardrail off.
+model_armor:
+  template_id: ${EXAMRFI_MODEL_ARMOR_TEMPLATE:-exam-rfi-orchestrator-guardrail}
+  host: ${EXAMRFI_MODEL_ARMOR_HOST:-modelarmor.asia-southeast1.rep.googleapis.com}
+  # The deadline on every sanitize call. A timeout fails CLOSED (audited BLOCKED, no model text).
+  timeout_seconds: 10.0
+
 # --------------------------------------------------------------------------------------- #
 # The adopter-owned policy block. EVERY number an exam response turns on lives here rather than
 # in an engine module, so a firm's second line can read these rules, argue about them and change
@@ -260,6 +272,13 @@ adapters:
     local: exam_rfi_orchestrator.adapters.local.generation:LocalGenerationAdapter
     gcp: exam_rfi_orchestrator.adapters.gcp.generation:CloudGenerationAdapter
     onprem: exam_rfi_orchestrator.adapters.onprem.generation:OnPremGenerationAdapter
+
+  # Rule R1: screens every generation call's input (before) and output (after). local is a
+  # deterministic heuristic stand-in; there is no offline emulator for Model Armor.
+  guardrail:
+    local: exam_rfi_orchestrator.adapters.local.guardrail:LocalHeuristicGuardrailAdapter
+    gcp: exam_rfi_orchestrator.adapters.gcp.guardrail:ModelArmorGuardrailAdapter
+    onprem: exam_rfi_orchestrator.adapters.onprem.guardrail:OnPremGuardrailAdapter
 
   # The open-item board, and the only correct home for a privilege waiver and an extension: both
   # are STORE LOOKUPS, so a client-asserted reference grants nothing.

@@ -279,6 +279,12 @@ variable "review_routing_enabled" {
   default     = true
 }
 
+variable "guardrail_enabled" {
+  description = "Switch the guardrail (the service's _GUARDRAIL variable, rule R1). A cheap runtime control: on in the reference, reversible, so it takes a default."
+  type        = bool
+  default     = true
+}
+
 variable "quality_service_url" {
   description = <<-EOT
     The model-quality-gate AI-quality service that owns the promotion verdict (rule R5); it becomes the
@@ -489,6 +495,21 @@ variable "posture_alerts_enabled" {
     reference deployment that nobody pages gains nothing from them: the signals still land in
     Cloud Logging, where an operator can read them. Set true in a deployment with an on-call
     rota to notify, in that deployment's own tfvars.
+  EOT
+}
+
+variable "model_armor_full_capabilities" {
+  type        = bool
+  default     = true
+  description = <<-EOT
+    Whether the guardrail template asks for the capabilities that are not served in every
+    region: the malicious-URI filter and multi-language detection.
+
+    True by default, because a deployment should get the whole guardrail unless it has a
+    reason not to. asia-southeast1 serves neither, and Model Armor does not degrade -- it
+    refuses the template with CAPABILITY_NOT_SUPPORTED, so the stack does not deploy at all.
+    A deployment there sets this false, which narrows the guardrail and is a disclosure to
+    make in deployment-posture.md rather than a silent downgrade.
   EOT
 }
 

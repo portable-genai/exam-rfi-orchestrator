@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping, Sequence
+from dataclasses import replace
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -62,6 +63,7 @@ from exam_rfi_orchestrator.config import (
     build_container,
 )
 from exam_rfi_orchestrator.domain import (
+    kernel,
     narration,
 )
 from exam_rfi_orchestrator.domain.models import (
@@ -290,6 +292,7 @@ def run_smoke(dataset: Path) -> EvalReport:  # noqa: PLR0914 - one local per nam
         obligations=container.obligations,
         evidence_packs=container.evidence_packs,
         generation=container.generation,
+        guardrail=container.guardrail,
         case_store=container.case_store,
         policy=policy,
     )
@@ -425,6 +428,10 @@ def _grounding_score(
     An item with no admissible evidence scores 1.0 for producing no ungrounded sentence rather
     than 0.0 for producing nothing: rule G1 means the generation port is not called at all, and
     declining to draft is the correct behaviour, not a failure to draft.
+
+    The call is screened by the bound guardrail exactly as the service screens it (rule R1): the
+    prompt INPUT before the model sees it, the answer OUTPUT before it is scored. A refusal in
+    either direction scores 0.0, because the service would discard that draft whole.
     """
     if not assessment.exhibits:
         return 0.0 if expect_draft else 1.0
@@ -437,9 +444,19 @@ def _grounding_score(
         business_days_remaining=assessment.sla.business_days_remaining,
         exhibits=assessment.exhibits,
     )
-    response = container.generation.generate(request)
+    screened_prompt = container.guardrail.screen(request.prompt, kernel.Direction.INPUT)
+    if not screened_prompt.allowed or screened_prompt.sanitized_text is None:
+        return 0.0
+    response = container.generation.generate(
+        replace(request, prompt=screened_prompt.sanitized_text)
+    )
+    screened_answer = container.guardrail.screen(response.text, kernel.Direction.OUTPUT)
+    if not screened_answer.allowed or screened_answer.sanitized_text is None:
+        return 0.0
     verdict = narration.narrative_verdict(
-        response.text, request.facts, [exhibit.exhibit_no for exhibit in assessment.exhibits]
+        screened_answer.sanitized_text,
+        request.facts,
+        [exhibit.exhibit_no for exhibit in assessment.exhibits],
     )
     return 1.0 if verdict.ok else 0.0
 
